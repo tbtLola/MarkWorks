@@ -1,0 +1,5 @@
+<form action="poop" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    {{ form.file }}
+    <input type="submit" value="Submit" name="imgfile">
+</form>
