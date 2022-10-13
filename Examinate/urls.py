@@ -2,7 +2,7 @@ from django.urls import path
 
 from . import views, scan_file_views
 
-app_name = 'polls'
+app_name = 'Examinate'
 urlpatterns = [
     path('', views.index, name='index'),
     path('<int:question_id>/', views.upload_file, name='file_upload'),

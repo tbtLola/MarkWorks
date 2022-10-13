@@ -1,5 +1,10 @@
-<form action="poop" enctype="multipart/form-data" method="post">
-    {% csrf_token %}
-    {{ form.file }}
-    <input type="submit" value="Submit" name="imgfile">
-</form>
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Upload</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="examFile">
+        <button type="submit">Upload File</button>
+    </form>
+{% endblock %}

@@ -1,16 +1,15 @@
-from django.shortcuts import render
+import numpy
 from django.http import HttpResponse
-from django.shortcuts import render
-from .forms import forms
-
 from cv2 import cv2
 import numpy as np
-# Create your views here.
 
 from . import utils
+import json
+from django.core.files.storage import default_storage, settings
+from django.core.files.base import ContentFile
+from .forms import UploadForms
 
-
-path = "polls/2.jpg"
+path = "Examinate/2.jpg"
 widthImg = 700
 heightImg = 700
 questions = 5
@@ -19,8 +18,18 @@ answerKey = [1,2,0,1,4]
 
 
 
-def index(request):
+def scan_file(request):
+
+#    if request.method == "POST":
+  #  if request.method == 'POST':
+    form = UploadForms(request.POST, request.FILES)
+    file = request.FILES['file']
+    path = default_storage.save('tmp/someimg', ContentFile(file.read()))
     img = cv2.imread(path)
+
+    print(file.name)
+    HttpResponse("WOOHOO")
+
     img = cv2.resize(img, (widthImg, heightImg))
     imgContours = img.copy()
     imgMaxContours = img.copy()
@@ -104,13 +113,4 @@ def index(request):
 
     cv2.imshow("Stacked Image ", imgStacked)
 
-    return HttpResponse("Hello world, you're at polls index." + str(score))
-
-def upload_file(request, question_id):
-    if request.method == 'POST':
-        form = UploadForms(request.POST, request.FILES)
-        if form.is_valid():
-            print("YO")
-    else:
-        form = UploadForms
-    return render(request, 'upload.html', {'form' : form})
+    return HttpResponse("Hello world, you're at Examinate index." + str(score))

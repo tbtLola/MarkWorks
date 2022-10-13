@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class DjangolearnConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'polls'
+    name = 'Examinate'
