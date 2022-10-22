@@ -23,6 +23,12 @@ def upload(request):
 
     return render(request, 'upload.html', context)
 
+def delete_exam(request, pk):
+    if request.method == 'POST':
+        exam = Exam.objects.get(pk=pk)
+        exam.delete()
+    return redirect('exam_list')
+
 class ExamListView(ListView):
     model = Exam
     template_name = 'exam_list.html'

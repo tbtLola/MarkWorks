@@ -14,6 +14,7 @@
             <th>Title</th>
             <th>Author</th>
             <th>Download</th>
+            <th>Delete</th>
         </tr>
     </thead>
     <tbody>
@@ -28,6 +29,14 @@
                  <a href="{{ exam.image.url }}" class="btn btn-primary btn-sm" target="_blank">
                      Download Exam
                  </a>
+            </td>
+            <td>
+                <form method="post" action="{% url 'delete_exam' exam.pk %}">
+                    {# Also use post to modify data in the db #}
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+                <a href=""></a>
             </td>
          </tr>
         {% endfor %}

@@ -11,3 +11,8 @@ class Exam(models.Model):
     def __str__(self):
         return self.title
 
+    def delete(self, *args, **kwargs):
+        self.image.delete()
+        self.cover.delete()
+        super().delete(*args, **kwargs)
+
