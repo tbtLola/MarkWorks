@@ -7,4 +7,11 @@
         <input type="file" name="examFile">
         <button type="submit">Upload File</button>
     </form>
+
+    {% if url %}
+
+        <p>Uploaded File: <a href="{{ url }}"> {{ url }}</a></p>
+
+    {% endif %}
+
 {% endblock %}

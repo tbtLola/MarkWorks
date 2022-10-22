@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Exam</h2>
+    <p>
+        <a href="{% url 'upload_exam' %}" class="btn btn-primary">Upload Exam</a>
+    </p>
+
+
+    <table class="table mb-0">
+    <thead>
+        <tr>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Download</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exam in exams %}
+         <tr>
+             <td>
+                 <img id=examCover src="{{ exam.image.url }}" style="width:100px">
+             </td>
+             <td>{{ exam.title }}</td>
+             <td>{{ exam.author }}</td>
+             <td>
+                 <a href="{{ exam.image.url }}" class="btn btn-primary btn-sm" target="_blank">
+                     Download Exam
+                 </a>
+            </td>
+         </tr>
+        {% endfor %}
+    </tbody>
+
+    </table>
+{% endblock %}
