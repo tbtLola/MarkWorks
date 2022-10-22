@@ -21,12 +21,16 @@ from django.conf.urls.static import static
 from Examinate import views
 
 urlpatterns = [
+
+    # Exam page
     path('', views.Home.as_view(), name='home'),
-    path('upload/', views.upload, name='upload'),
     path('exams/', views.ExamListView.as_view(), name='exam_list'),
     path('exams/upload', views.UploadExamView.as_view(), name='upload_exam'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
     path('admin/', admin.site.urls),
+
+    # Sign up page
+    path('signup/', views.signup, name='signup'),
 ]
 
 if settings.DEBUG:
