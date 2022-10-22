@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 
 class Exam(models.Model):
     title = models.CharField(max_length=100)
@@ -15,4 +14,3 @@ class Exam(models.Model):
         self.image.delete()
         self.cover.delete()
         super().delete(*args, **kwargs)
-
