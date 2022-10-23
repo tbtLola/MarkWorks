@@ -27,6 +27,7 @@ urlpatterns = [
     path('exams/', views.ExamListView.as_view(), name='exam_list'),
     path('exams/upload', views.UploadExamView.as_view(), name='upload_exam'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
 
     # Sign up page
