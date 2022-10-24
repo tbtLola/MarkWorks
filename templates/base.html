@@ -25,9 +25,18 @@
           <li class="nav-item">
             <a class="nav-link text-nowrap" href="{% url 'signup' %}">Sign up </a>
           </li>
-            <li class="nav-item">
+          <li class="nav-item">
             <a class="nav-link text-nowrap" href="{% url 'login' %}">Log in</a>
           </li>
+          {% else %}
+              {# Eventually we move this to one single exam management page #}
+              <li class="nav-item">
+                  <a class="nav-link text-nowrap" href="{% url 'upload_exam' %}">Upload Exam</a>
+              </li>
+              {# Eventually we only pull per user #}
+              <li class="nav-item">
+                  <a class="nav-link text-nowrap" href="{% url 'exam_list' %}">View Exams</a>
+              </li>
           {% endif %}
         </ul>
       </div>

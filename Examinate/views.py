@@ -3,11 +3,13 @@ from django.views.generic import TemplateView
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from .registration_form import RegistrationForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import ExamForm
 from .models import Exam
 
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 
 
@@ -22,13 +24,13 @@ def delete_exam(request, pk):
     return redirect('exam_list')
 
 
-class ExamListView(ListView):
+class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exam_list.html'
     context_object_name = 'exams'
 
 
-class UploadExamView(CreateView):
+class UploadExamView(LoginRequiredMixin, CreateView):
     model = Exam
     form_class = ExamForm
     success_url = reverse_lazy('exam_list')
