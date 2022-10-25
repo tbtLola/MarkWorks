@@ -15,6 +15,7 @@
             <th>Author</th>
             <th>Download</th>
             <th>Delete</th>
+            <th>Mark</th>
         </tr>
     </thead>
     <tbody>
@@ -38,6 +39,12 @@
                 </form>
                 <a href=""></a>
             </td>
+             <td>
+                 <form method="post" action="{% url 'mark_exam' exam.pk %}">
+                     {% csrf_token %}
+                     <button type="submit" class="btn btn-sm">Mark</button>
+                 </form>
+             </td>
          </tr>
         {% endfor %}
     </tbody>
