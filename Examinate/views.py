@@ -119,6 +119,8 @@ def mark_exam(request, pk):  # TODO handle GET requests
         score = (sum(grading) / NUMBER_OF_QUESTIONS) * 100
         print(score)
 
+        Exam.objects.filter(pk=pk).update(grade=score)
+
     return redirect('exam_list')
 
 

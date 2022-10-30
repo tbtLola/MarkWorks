@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
   <h2>Exam</h2>
@@ -6,6 +7,65 @@
         <a href="{% url 'upload_exam' %}" class="btn btn-primary">Upload Exam</a>
     </p>
 
+       <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createExamModal">
+      Create an Exam
+    </button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="createExamModal" tabindex="-1" role="dialog" aria-labelledby="createExamModalTitle" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createExamModalTitle">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+            <div class="modal-body" id="container">
+                <script>
+                    function trial() {
+
+                        var number = document.getElementById("fname").value;
+                        var container = document.getElementById("containerForQuestionInputs");
+
+                        while (container.hasChildNodes()) {
+                            container.removeChild(container.lastChild);
+                        }
+
+                        for (let i = 0; i < number ; i++) {
+                            
+                            container.appendChild(document.createTextNode(i + 1 + ". "));
+
+                            var input = document.createElement("input");
+                            input.type = "text";
+                            input.id = "question" + i;
+                            {#input.name = "";#}
+                            input.style = "width: 30px;";
+                            container.appendChild(input);
+                            {#container.appendChild(document.createElement("br"))#}
+                        }
+                    }
+                </script>
+                {#              <script src = "{% static "js/my_javascript.js" %}"> </script>#}
+
+
+              <label for="fname">Number of questions</label>
+              <input type="number" id="fname" name="fname" style="width: 50px;">
+              <button type="button" class="btn btn-secondary" onclick="trial()">Add Questions</button>
+              <div id="containerForQuestionInputs""></div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <br>
+    <br>
 
     <table class="table mb-0">
     <thead>
@@ -44,6 +104,7 @@
                      {% csrf_token %}
                      <button type="submit" class="btn btn-sm">Mark</button>
                  </form>
+                 {{ exam.grade }}}
              </td>
          </tr>
         {% endfor %}
