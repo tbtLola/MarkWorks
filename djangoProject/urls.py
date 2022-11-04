@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -26,10 +26,14 @@ urlpatterns = [
     path('', views.Home.as_view(), name='home'),
     path('exams/', views.ExamListView.as_view(), name='exam_list'),
     path('exams/upload', views.UploadExamView.as_view(), name='upload_exam'),
+    path('exams/create', views.CreateExamView.as_view(), name='create_exam'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
     path('exams/<int:pk>/mark', views.mark_exam, name='mark_exam'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
+
+    path('add_question/', views.AddQuestionView.as_view(), name='add_question'),
+    re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
 
     # Sign up page
     path('signup/', views.signup, name='signup'),

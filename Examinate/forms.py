@@ -1,5 +1,6 @@
 from django import forms
-from .models import Exam
+from .models import *
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 class UploadForms(forms.Form):
@@ -11,3 +12,11 @@ class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
         fields = ('title', 'author', 'image')
+
+
+class QuestionForm(forms.ModelForm):
+    content = RichTextUploadingField()
+
+    class Meta:
+        model = Question
+        fields = 'content',

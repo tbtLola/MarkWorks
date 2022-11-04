@@ -1,4 +1,5 @@
 from django.db import models
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 class Exam(models.Model):
@@ -15,3 +16,11 @@ class Exam(models.Model):
         self.image.delete()
         self.cover.delete()
         super().delete(*args, **kwargs)
+
+
+class Question(models.Model):
+    question = models.CharField(max_length=1000)
+    content = RichTextUploadingField(blank=True, null=True)
+
+    def __str__(self):
+        return self.question

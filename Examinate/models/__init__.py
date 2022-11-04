@@ -1,2 +1,2 @@
-from .exam import Exam
+from .exam import Exam, Question
 from .userprofile import UserProfile

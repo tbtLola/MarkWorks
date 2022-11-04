@@ -6,8 +6,8 @@ from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from .registration_form import RegistrationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import ExamForm
-from .models import Exam
+from .forms import ExamForm, QuestionForm
+from .models import Exam, Question
 from cv2 import cv2  # TODO move this and all marking into separate script
 # TODO not sure if I should do this, look for alternate
 from django.conf import settings
@@ -24,6 +24,8 @@ IMAGE_HEIGHT = 700
 NUMBER_OF_QUESTIONS = 5
 NUMBER_OF_CHOICES = 5
 ANSWER_KEY = [1, 2, 0, 1, 4]
+
+
 ##############
 
 class Home(TemplateView):
@@ -128,6 +130,19 @@ class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exam_list.html'
     context_object_name = 'exams'
+    # form_class = QuestionForm
+
+    def get(self, request):
+        form = QuestionForm()
+        return render(request, 'exam_list.html', {'form': form})
+
+
+class AddQuestionView(ListView):
+    model = Question
+
+    def get(self, request):
+        form = QuestionForm()
+        return render(request, 'add_question.html', {'form': form})
 
 
 class UploadExamView(LoginRequiredMixin, CreateView):
@@ -135,6 +150,13 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     form_class = ExamForm
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
+
+class CreateExamView(LoginRequiredMixin, CreateView):
+    model = Question
+
+    def get(self, request):
+        form = QuestionForm()
+        return render(request, 'create_exam.html', {'form':form})
 
 
 def signup(request):
