@@ -16,7 +16,8 @@ class ExamForm(forms.ModelForm):
 
 class QuestionForm(forms.ModelForm):
     content = RichTextUploadingField()
+    answer = forms.CharField(max_length=100)
 
     class Meta:
         model = Question
-        fields = 'content',
+        fields = ('content', 'answer')

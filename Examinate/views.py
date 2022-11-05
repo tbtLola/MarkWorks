@@ -130,6 +130,7 @@ class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exam_list.html'
     context_object_name = 'exams'
+
     # form_class = QuestionForm
 
     def get(self, request):
@@ -151,12 +152,31 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
 
+
 class CreateExamView(LoginRequiredMixin, CreateView):
     model = Question
+    context = {}
 
     def get(self, request):
+        self.context['form'] = QuestionForm()
+        self.context['question'] = Question.objects.all()
+
         form = QuestionForm()
-        return render(request, 'create_exam.html', {'form':form})
+        return render(request, 'create_exam.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = QuestionForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+        self.context['form'] = QuestionForm()
+        self.context['question'] = Question.objects.all()
+
+        return render(request, 'create_exam.html', self.context)
+
+
+
 
 
 def signup(request):

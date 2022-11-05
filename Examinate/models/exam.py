@@ -21,6 +21,7 @@ class Exam(models.Model):
 class Question(models.Model):
     question = models.CharField(max_length=1000)
     content = RichTextUploadingField(blank=True, null=True)
+    answer = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.question
