@@ -4,9 +4,10 @@ from ckeditor_uploader.fields import RichTextUploadingField
 
 class Exam(models.Model):
     title = models.CharField(max_length=100)
+    user_id = models.ForeignKey("UserProfile", on_delete=models.CASCADE, default="b6cc3a6e-2348-480c-b6ed-f077c1367368")
     author = models.CharField(max_length=100, null=True)
     grade = models.IntegerField(default=0)
-    image = models.FileField(upload_to='exams/pdfs/')
+    image = models.FileField(upload_to='exams/pdfs/', null=True)
     cover = models.ImageField(upload_to='exams/covers/', null=True, blank=True)
 
     def __str__(self):

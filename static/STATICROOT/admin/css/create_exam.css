@@ -4,5 +4,8 @@
     overflow-x: hidden; /* Hide horizontal scrollbar */
     overflow-y:scroll;
     /*-webkit-overflow-scrolling: touch;*/
+}
 
+.exam_title{
+   text-align: center;
 }

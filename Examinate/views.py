@@ -154,29 +154,40 @@ class UploadExamView(LoginRequiredMixin, CreateView):
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):
-    model = Question
+    # model = Question
     context = {}
 
     def get(self, request):
         self.context['form'] = QuestionForm()
+        self.context['exam_form'] = ExamForm()
         self.context['question'] = Question.objects.all()
 
+        # print(request.user.id)
+
         form = QuestionForm()
-        return render(request, 'create_exam.html', {'form': form})
+        exam_form = ExamForm(prefix="exam")
+        return render(request, 'create_exam.html', {'form': form, 'exam_form': exam_form})
 
     def post(self, request, *args, **kwargs):
-        form = QuestionForm(request.POST)
-
+        form = QuestionForm(request.POST, prefix="normal")
+        exam_form = ExamForm(request.POST, prefix="exam")
+        # print(exam_form.fields)
+        #
+        # print(exam_form)
+        # print(exam_form.is_valid())
+        # print(form.is_valid())
+        print(request.user.id )
         if form.is_valid():
             form.save()
+        if exam_form.is_valid():
+            new_exam = exam_form.save()
+            self.context['new_exam'] = new_exam
 
         self.context['form'] = QuestionForm()
+        self.context['exam_form'] = ExamForm()
         self.context['question'] = Question.objects.all()
 
         return render(request, 'create_exam.html', self.context)
-
-
-
 
 
 def signup(request):
