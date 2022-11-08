@@ -34,7 +34,7 @@ class StudentAssessmentMarkingForm(forms.ModelForm):
     def getThing(self, user):
         unfilter = Exam.objects.all()
         all__filter = Exam.objects.all().filter(user=user)
-        self.exam_assessment = forms.ModelChoiceField(label="Item Choices", queryset=all__filter, required=True)
+        self.fields['exam_assessment'] = forms.ModelChoiceField(label="Item Choices", queryset=all__filter, required=True)
         print(all__filter)
         print(unfilter)
 
