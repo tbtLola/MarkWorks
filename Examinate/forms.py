@@ -12,7 +12,7 @@ class ExamForm(forms.ModelForm):
     # title = forms.CharField(max_length=50)
     class Meta:
         model = Exam
-        exclude = ['author', 'grade', 'cover', 'user']
+        exclude = ['author', 'grade', 'cover', 'image', 'user']
         labels = {
             'title': '',
         }
@@ -31,6 +31,14 @@ class StudentAssessmentMarkingForm(forms.ModelForm):
     class Meta:
         model = exam.StudentAssessment
         fields = ('image', 'exam_assessment')
+    def getThing(self, user):
+        unfilter = Exam.objects.all()
+        all__filter = Exam.objects.all().filter(user=user)
+        self.exam_assessment = forms.ModelChoiceField(label="Item Choices", queryset=all__filter, required=True)
+        print(all__filter)
+        print(unfilter)
+
+
 
 
 class QuestionForm(forms.ModelForm):

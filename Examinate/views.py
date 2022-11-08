@@ -40,6 +40,7 @@ def delete_exam(request, pk):
         exam.delete()
     return redirect('exam_list')
 
+
 def mark_exam(request, pk):  # TODO handle GET requests
 
     exam = Exam.objects.get(pk=pk)
@@ -153,12 +154,20 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
 
-class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
+class AssessStudentExamView(LoginRequiredMixin, CreateView):
     model = exam.StudentAssessment
     form_class = StudentAssessmentMarkingForm
     success_url = reverse_lazy('exam_list')
     template_name = 'mark_exam.html'
+    context = {}
+
+    def get(self, request):
+        form = StudentAssessmentMarkingForm()
+        form.getThing(request.user)
+        self.context['form'] = form
+
+        return render(request, 'mark_exam.html', self.context)
 
     def post(self, request, *args, **kwargs):
         mark_form = StudentAssessmentMarkingForm(request.POST, request.FILES)
@@ -197,6 +206,7 @@ class CreateExamView(LoginRequiredMixin, CreateView):
             form.instance.exam_assessment = exam
             question = form.save(commit=False)
             question.question_number = "Question " + str(question_number)
+            question.exam = exam
             question.save()
             # question.
         if exam_form.is_valid():
