@@ -6,10 +6,12 @@ from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
 from .registration_form import RegistrationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import ExamForm, QuestionForm
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm
 from .models import Exam, Question
+from .models import exam
 from cv2 import cv2  # TODO move this and all marking into separate script
 # TODO not sure if I should do this, look for alternate
+from django.http import HttpResponseRedirect
 from django.conf import settings
 from .utils import stackImages, recContour, getCornerPoints, reorder, splitBoxes
 
@@ -37,7 +39,6 @@ def delete_exam(request, pk):
         exam = Exam.objects.get(pk=pk)
         exam.delete()
     return redirect('exam_list')
-
 
 def mark_exam(request, pk):  # TODO handle GET requests
 
@@ -79,7 +80,7 @@ def mark_exam(request, pk):  # TODO handle GET requests
         ptTwoGrade = np.float32([[0, 0], [325, 0], [0, 150], [325, 150]])
         gradeMatrix = cv2.getPerspectiveTransform(ptOneGrade, ptTwoGrade)
         imgGradeDisplay = cv2.warpPerspective(resized_image, gradeMatrix, (325, 150))
-        # cv2.imshow("Grade", imgGradeDisplay)
+        cv2.imshow("Grade", imgGradeDisplay)
 
         # Apply threshold
         imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
@@ -152,6 +153,22 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
 
+class AssessStudentExamView(LoginRequiredMixin, CreateView):
+
+    model = exam.StudentAssessment
+    form_class = StudentAssessmentMarkingForm
+    success_url = reverse_lazy('exam_list')
+    template_name = 'mark_exam.html'
+
+    def post(self, request, *args, **kwargs):
+        mark_form = StudentAssessmentMarkingForm(request.POST, request.FILES)
+
+        if mark_form.is_valid():
+            mark_form.instance.user = request.user
+            mark_form.save()
+
+        return render(request, 'exam_list.html')
+
 
 class CreateExamView(LoginRequiredMixin, CreateView):
     # model = Question
@@ -169,23 +186,29 @@ class CreateExamView(LoginRequiredMixin, CreateView):
         return render(request, 'create_exam.html', {'form': form, 'exam_form': exam_form})
 
     def post(self, request, *args, **kwargs):
-        form = QuestionForm(request.POST, prefix="normal")
+        form = QuestionForm(request.POST)
         exam_form = ExamForm(request.POST, prefix="exam")
-        # print(exam_form.fields)
-        #
-        # print(exam_form)
-        # print(exam_form.is_valid())
-        # print(form.is_valid())
-        print(request.user.id )
+
         if form.is_valid():
-            form.save()
+            exam = self.context['new_exam']
+            exam_questions = Question.objects.filter(exam=exam)
+            question_number = len(exam_questions) + 1
+
+            form.instance.exam_assessment = exam
+            question = form.save(commit=False)
+            question.question_number = "Question " + str(question_number)
+            question.save()
+            # question.
         if exam_form.is_valid():
+            exam_form.instance.user = request.user
             new_exam = exam_form.save()
             self.context['new_exam'] = new_exam
 
         self.context['form'] = QuestionForm()
         self.context['exam_form'] = ExamForm()
-        self.context['question'] = Question.objects.all()
+        new_exam = self.context['new_exam']
+        questions = Question.objects.filter(exam=new_exam)
+        self.context['question'] = questions
 
         return render(request, 'create_exam.html', self.context)
 

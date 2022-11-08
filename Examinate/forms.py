@@ -12,7 +12,7 @@ class ExamForm(forms.ModelForm):
     # title = forms.CharField(max_length=50)
     class Meta:
         model = Exam
-        exclude = ['author', 'grade', 'image', 'cover', 'user_id']
+        exclude = ['author', 'grade', 'cover', 'user']
         labels = {
             'title': '',
         }
@@ -25,10 +25,18 @@ class ExamForm(forms.ModelForm):
         # self.fields['title'].label = ""
 
 
+class StudentAssessmentMarkingForm(forms.ModelForm):
+    exam_assessment = forms.ModelChoiceField(label="Item Choices", queryset=Exam.objects.all(), required=True)
+    image = forms.FileField()
+    class Meta:
+        model = exam.StudentAssessment
+        fields = ('image', 'exam_assessment')
+
+
 class QuestionForm(forms.ModelForm):
     content = RichTextUploadingField()
     answer = forms.CharField(max_length=100)
 
     class Meta:
         model = Question
-        fields = ('content', 'answer')
+        fields = ('content', 'answer', 'question_type')
