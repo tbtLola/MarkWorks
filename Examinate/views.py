@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
+from django.http import JsonResponse
 from .registration_form import RegistrationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm
@@ -21,11 +22,19 @@ import numpy as np
 User = get_user_model()
 
 ##############
-IMAGE_WIDTH = 700
-IMAGE_HEIGHT = 700
-NUMBER_OF_QUESTIONS = 5
+IMAGE_WIDTH = 1400
+IMAGE_HEIGHT = 1000
 NUMBER_OF_CHOICES = 5
-ANSWER_KEY = [1, 2, 0, 1, 4]
+
+
+#TODO move this into the model
+MC_DiCTIONARY = {
+    "a" : 0,
+    "b" : 1,
+    "c" : 2,
+    "d" : 3,
+    "e" : 4,
+}
 
 
 ##############
@@ -41,15 +50,13 @@ def delete_exam(request, pk):
     return redirect('exam_list')
 
 
-def mark_exam(request, pk):  # TODO handle GET requests
+def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET requests
 
-    exam = Exam.objects.get(pk=pk)
-
-    image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, exam.image.name))
+    image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
     image = cv2.imread(image_file_path)
     resized_image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
 
-    # Pre-procesing
+    # # Pre-procesing
     image_contours = resized_image.copy()
     image_max_contours = resized_image.copy()
     image_gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
@@ -58,74 +65,156 @@ def mark_exam(request, pk):  # TODO handle GET requests
 
     # Finding all contours
     contours, hierarchy = cv2.findContours(image_canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours = sort_contours(contours)
     cv2.drawContours(image_contours, contours, -1, (0, 255, 0), 10)
 
-    rec_contours = rec_contour(contours)
-    max_contour = get_corner_points(rec_contours[0])  # biggest contour
+    rec_contours = recContour(contours)
 
-    grading_points = get_corner_points(rec_contours[1])
+    if len(rec_contours) != 0:
+        total_boxes = []
+        for i in range(len(rec_contours)):
+            contour_corner_points = getCornerPoints(rec_contours[i])
+            reordered_contour = reorder(contour_corner_points)
+            rec_contours[i] = reordered_contour
 
-    if max_contour.size != 0 and grading_points.size != 0:
-        cv2.drawContours(image_max_contours, max_contour, -1, (0, 255, 0), 20)
-        cv2.drawContours(image_max_contours, grading_points, -1, (255, 0, 0), 20)
+            first_point = np.float32(rec_contours[i])
+            second_point = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
 
-        maxContour = reorder(max_contour)
-        gradingPoints = reorder(grading_points)
+            matrix = cv2.getPerspectiveTransform(first_point, second_point)
+            warped_image = cv2.warpPerspective(resized_image, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
+            warped_gray_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
+            warped_image_threshold = cv2.threshold(warped_gray_image, 170, 255, cv2.THRESH_BINARY_INV)[1]
 
-        ptOne = np.float32(maxContour)
-        ptTwo = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
-        matrix = cv2.getPerspectiveTransform(ptOne, ptTwo)
-        imgWarpColored = cv2.warpPerspective(resized_image, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
+            split_boxes = splitBoxes(warped_image_threshold)
+            total_boxes = total_boxes + split_boxes
+            # cv2.imshow("warpy" + str(i), warped_image)
+            # cv2.imshow("gray_warpy" + str(i), warped_image)
+            cv2.imshow("thres_warpy" + str(i), warped_image_threshold)
 
-        ptOneGrade = np.float32(gradingPoints)
-        ptTwoGrade = np.float32([[0, 0], [325, 0], [0, 150], [325, 150]])
-        gradeMatrix = cv2.getPerspectiveTransform(ptOneGrade, ptTwoGrade)
-        imgGradeDisplay = cv2.warpPerspective(resized_image, gradeMatrix, (325, 150))
-        cv2.imshow("Grade", imgGradeDisplay)
-
-        # Apply threshold
-        imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
-        imgThresh = cv2.threshold(imgWarpGray, 170, 255, cv2.THRESH_BINARY_INV)[1]
-
-        boxes = splitBoxes(imgThresh)
-
-        # Getting the non-zero pixel value of each box
-        pixelVal = np.zeros((NUMBER_OF_QUESTIONS, NUMBER_OF_CHOICES))  # 5x5 b/c 5 questions and 5 answers
+        pixelVal = np.zeros((number_of_questions, NUMBER_OF_CHOICES))  # 5x5 b/c 5 questions and 5 answers
         cols = 0
         rows = 0
 
-        for image in boxes:
+        total_number_of_boxes = len(total_boxes)
+        number_of_choices = number_of_questions * NUMBER_OF_CHOICES
+        number_of_unused_boxes = total_number_of_boxes - number_of_choices
+        total_boxes = total_boxes[:-number_of_unused_boxes]  # removes unused rows in each box
+
+        for image in total_boxes:
             totalPixels = cv2.countNonZero(image)
             pixelVal[rows][cols] = totalPixels
             cols += 1
 
-            if cols == NUMBER_OF_CHOICES:
+            if cols ==  NUMBER_OF_CHOICES:
                 rows += 1
                 cols = 0
         print(pixelVal)
 
         # Finding index val of the markings
         index = []
-        for x in range(0, NUMBER_OF_QUESTIONS):
+        for x in range(0, number_of_questions):
             questionRow = pixelVal[x]
             indexVal = np.where(questionRow == np.amax(questionRow))
             index.append(indexVal[0][0])
-        print(index)
+        # print(index)
 
         # Grading
         grading = []
-        for x in range(0, NUMBER_OF_QUESTIONS):
-            if ANSWER_KEY[x] == index[x]:
+        for x in range(0, number_of_questions):
+            if answer_key[x] == index[x]:
                 grading.append(1)
             else:
                 grading.append(0)
         # print(grading)
-        score = (sum(grading) / NUMBER_OF_QUESTIONS) * 100
+        score = (sum(grading) / number_of_questions) * 100
         print(score)
 
-        Exam.objects.filter(pk=pk).update(grade=score)
 
-    return redirect('exam_list')
+
+# if max_contour.size != 0 and grading_points.size != 0:
+    #     cv2.drawContours(image_max_contours, max_contour, -1, (0, 255, 0), 20)
+    #     cv2.drawContours(image_max_contours, grading_points, -1, (255, 0, 0), 20)
+    #
+    #     maxContour = reorder(max_contour)
+    #     gradingPoints = reorder(grading_points)
+    #
+    #     ptOne = np.float32(maxContour)
+    #     ptTwo = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
+    #     matrix = cv2.getPerspectiveTransform(ptOne, ptTwo)
+    #     imgWarpColored = cv2.warpPerspective(resized_image, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
+    #
+    #     ptOneGrade = np.float32(gradingPoints)
+    #     ptTwoGrade = np.float32([[0, 0], [325, 0], [0, 150], [325, 150]])
+    #     gradeMatrix = cv2.getPerspectiveTransform(ptOneGrade, ptTwoGrade)
+    #     imgGradeDisplay = cv2.warpPerspective(resized_image, gradeMatrix, (325, 150))
+    #     cv2.imshow("Grade", imgGradeDisplay)
+    #
+    #     # Apply threshold
+    #     imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
+    #     imgThresh = cv2.threshold(imgWarpGray, 170, 255, cv2.THRESH_BINARY_INV)[1]
+    #
+    #     boxes = splitBoxes(imgThresh)
+    #
+    #     # Getting the non-zero pixel value of each box
+    #     pixelVal = np.zeros((NUMBER_OF_QUESTIONS, NUMBER_OF_CHOICES))  # 5x5 b/c 5 questions and 5 answers
+    #     cols = 0
+    #     rows = 0
+    #
+    #     for image in boxes:
+    #         totalPixels = cv2.countNonZero(image)
+    #         pixelVal[rows][cols] = totalPixels
+    #         cols += 1
+    #
+    #         if cols == NUMBER_OF_CHOICES:
+    #             rows += 1
+    #             cols = 0
+    #     print(pixelVal)
+    #
+    #     # Finding index val of the markings
+    #     index = []
+    #     for x in range(0, NUMBER_OF_QUESTIONS):
+    #         questionRow = pixelVal[x]
+    #         indexVal = np.where(questionRow == np.amax(questionRow))
+    #         index.append(indexVal[0][0])
+    #     print(index)
+    #
+    #     # Grading
+    #     grading = []
+    #     for x in range(0, NUMBER_OF_QUESTIONS):
+    #         if ANSWER_KEY[x] == index[x]:
+    #             grading.append(1)
+    #         else:
+    #             grading.append(0)
+    #     # print(grading)
+    #     score = (sum(grading) / NUMBER_OF_QUESTIONS) * 100
+    #     print(score)
+    #
+    #     Exam.objects.filter(pk=pk).update(grade=score)
+    #
+    # return redirect('exam_list')
+
+def sort_contours(cnts, method="left-to-right"):
+    # initialize the reverse flag and sort index
+    reverse = False
+    i = 0
+
+    # handle if we need to sort in reverse
+    if method == "right-to-left" or method == "bottom-to-top":
+        reverse = True
+
+    # handle if we are sorting against the y-coordinate rather than
+    # the x-coordinate of the bounding box
+    if method == "top-to-bottom" or method == "bottom-to-top":
+        i = 1
+
+    # construct the list of bounding boxes and sort them from top to
+    # bottom
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
+        key=lambda b:b[1][i], reverse=reverse))
+
+    # return the list of sorted contours and bounding boxes
+    return (cnts)
 
 
 class ExamListView(LoginRequiredMixin, ListView):
@@ -164,7 +253,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
     def get(self, request):
         form = StudentAssessmentMarkingForm()
-        form.getThing(request.user)
+        form.getThing(request.user) #TODO move this to an init method in the forms class
         self.context['form'] = form
 
         return render(request, 'mark_exam.html', self.context)
@@ -174,7 +263,23 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
         if mark_form.is_valid():
             mark_form.instance.user = request.user
-            mark_form.save()
+            exam_pk = mark_form.fields["exam_assessment"]
+
+            exam_pk = mark_form.data["exam_assessment"]
+
+            multiple_choice_questions = Question.objects.filter(exam_id=exam_pk).filter(question_type='MC')
+            multiple_choice_answers = multiple_choice_questions.values_list('answer', flat=True)
+
+            answer_key = []
+            for mc in multiple_choice_answers:
+                answer_key.append(MC_DiCTIONARY.get(mc))
+
+            print("answer key: " + str(answer_key))
+            print(len(multiple_choice_questions))
+            print(multiple_choice_answers)
+            saved_form = mark_form.save()
+
+            mark_exam(saved_form.image.name, len(multiple_choice_questions), answer_key)
 
         return render(request, 'exam_list.html')
 
@@ -235,21 +340,6 @@ def signup(request):
         'form': form
     })
 
-
-def rec_contour(contours):
-    rec_con = []
-
-    for i in contours:
-        area = cv2.contourArea(i)
-        # print("Area: ", area)
-        if area > 50:
-            perimeter = cv2.arcLength(i, True)
-            approximation = cv2.approxPolyDP(i, 0.02 * perimeter, True)
-            # print("Corner Points", len(approximation)) #The ones with 4 are essentially a square or rectangle
-            if len(approximation) == 4:
-                rec_con.append(i)
-    rec_con = sorted(rec_con, key=cv2.contourArea, reverse=True)
-    return rec_con
 
 
 def get_corner_points(cont):

@@ -30,13 +30,11 @@ def stackImages(imgArray,scale,labels=[]):
     if len(labels) != 0:
         eachImgWidth= int(ver.shape[1] / cols)
         eachImgHeight = int(ver.shape[0] / rows)
-        #print(eachImgHeight)
         for d in range(0, rows):
             for c in range (0,cols):
                 cv2.rectangle(ver,(c*eachImgWidth,eachImgHeight*d),(c*eachImgWidth+len(labels[d][c])*13+27,30+eachImgHeight*d),(255,255,255),cv2.FILLED)
                 cv2.putText(ver,labels[d][c],(eachImgWidth*c+10,eachImgHeight*d+20),cv2.FONT_HERSHEY_COMPLEX,0.7,(255,0,255),2)
     return ver
-
 
 
 def recContour(contours):
@@ -51,7 +49,8 @@ def recContour(contours):
             #print("Corner Points", len(approximation)) #The ones with 4 are essentially a square or rectangle
             if len(approximation) == 4:
                 recCon.append(i)
-    recCon = sorted(recCon, key = cv2.contourArea, reverse=True)
+    # recCon = sorted(recCon, key = cv2.contourArea, reverse=True)
+
     return recCon
 
 def getCornerPoints(cont):
@@ -75,7 +74,7 @@ def reorder(myPoints):
     return myPointsNew
 
 def splitBoxes(img):
-    rows = np.vsplit(img, 5)
+    rows = np.vsplit(img, 10)
     boxes = []
     for r in rows:
         cols = np.hsplit(r, 5)
@@ -83,4 +82,26 @@ def splitBoxes(img):
             boxes.append(box)
     return boxes
 
+def sort_contours(cnts, method="left-to-right"):
+    # initialize the reverse flag and sort index
+    reverse = False
+    i = 0
+
+    # handle if we need to sort in reverse
+    if method == "right-to-left" or method == "bottom-to-top":
+        reverse = True
+
+    # handle if we are sorting against the y-coordinate rather than
+    # the x-coordinate of the bounding box
+    if method == "top-to-bottom" or method == "bottom-to-top":
+        i = 1
+
+    # construct the list of bounding boxes and sort them from top to
+    # bottom
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
+        key=lambda b:b[1][i], reverse=reverse))
+
+    # return the list of sorted contours and bounding boxes
+    return (cnts)
 

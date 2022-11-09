@@ -38,7 +38,9 @@ class StudentAssessmentMarkingForm(forms.ModelForm):
         print(all__filter)
         print(unfilter)
 
-
+    def __init__(self, *args, **kwargs):
+        super(StudentAssessmentMarkingForm, self).__init__(*args, **kwargs)
+        # self.fields['title'].label = ""
 
 
 class QuestionForm(forms.ModelForm):
