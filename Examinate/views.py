@@ -221,7 +221,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
         return render(request, 'mark_exam.html', self.context)
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs): #TODO check if file type is pdf or jpg/png
         mark_form = StudentAssessmentMarkingForm(request.POST, request.FILES)
 
         if mark_form.is_valid():
@@ -252,6 +252,12 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
                 i = i + 1
                 score = mark_exam(jpeg_file_name_path, len(multiple_choice_questions), answer_key)
                 scores.append(score)
+                marked_student_assessment = exam.MarkedStudentAssessment(examiner_id=request.user.id,
+                                                                         exam_id=exam_pk,
+                                                                         grade=score,
+                                                                         name="test", #TODO update the name
+                                                                         image=image_file_name) #TODO instead of doing this maybe just use the form
+                marked_student_assessment.save()
 
 
             self.context['scores'] = scores

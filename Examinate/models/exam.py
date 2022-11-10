@@ -52,7 +52,7 @@ class MarkedStudentAssessment(models.Model):
     examiner = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
     exam = models.ForeignKey("Exam", on_delete=models.PROTECT)
     grade = models.IntegerField()
-    name = models.CharField
+    name = models.CharField(max_length=100)
     image = models.FileField(upload_to='exams/completed_assessments/')
-    upload_date = models.DateTimeField()
+    upload_date = models.DateTimeField(null=True)
     upload_instant = models.DateTimeField(auto_now_add=True)
