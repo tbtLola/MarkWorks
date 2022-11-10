@@ -47,3 +47,12 @@ class StudentAssessment(models.Model):
 
     def __str__(self):
         return self.user
+
+class MarkedStudentAssessment(models.Model):
+    examiner = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
+    exam = models.ForeignKey("Exam", on_delete=models.PROTECT)
+    grade = models.IntegerField()
+    name = models.CharField
+    image = models.FileField(upload_to='exams/completed_assessments/')
+    upload_date = models.DateTimeField()
+    upload_instant = models.DateTimeField(auto_now_add=True)

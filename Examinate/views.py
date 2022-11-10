@@ -201,6 +201,7 @@ def get_images_from_pdf(image):
 
         save = page.save(jpeg_file_name_path, 'JPEG')
         print(save)
+        print(save.url)
         i = i + 1
 
     return file_name_paths
@@ -235,19 +236,23 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             for mc in multiple_choice_answers:
                 answer_key.append(MC_DiCTIONARY.get(mc))
 
-            print("answer key: " + str(answer_key))
-            print(len(multiple_choice_questions))
-            print(multiple_choice_answers)
+            self.logTestInfo(answer_key, multiple_choice_answers, multiple_choice_questions)
+
             saved_form = mark_form.save()
 
-            image_paths_from_pdfs = get_images_from_pdf(saved_form.image.name)
-            print(image_paths_from_pdfs)
+            image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, saved_form.image.name))
+            pages = convert_from_path(image_file_path, 500)
 
+            i = 0
             scores = []
-            for image_path in image_paths_from_pdfs:
-                score = mark_exam(image_path, len(multiple_choice_questions), answer_key)
+            for page in pages:
+                image_file_name = 'out' + str(i) + '.jpg'
+                jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
+                page.save(jpeg_file_name_path, 'JPEG')
+                i = i + 1
+                score = mark_exam(jpeg_file_name_path, len(multiple_choice_questions), answer_key)
                 scores.append(score)
-                print(score)
+
 
             self.context['scores'] = scores
 
@@ -262,6 +267,11 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             return render(request, 'mark_exam.html', self.context)
 
         return render(request, 'mark_exam.html', self.context)
+
+    def logTestInfo(self, answer_key, multiple_choice_answers, multiple_choice_questions):
+        print("answer key: " + str(answer_key))
+        print(len(multiple_choice_questions))
+        print(multiple_choice_answers)
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):
