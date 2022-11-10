@@ -215,6 +215,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
     context = {}
 
     def get(self, request):
+        self.context.clear()
         form = StudentAssessmentMarkingForm()
         form.getThing(request.user) #TODO move this to an init method in the forms class
         self.context['form'] = form

@@ -2,78 +2,98 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-  <link rel="stylesheet" href="{% static 'STATICROOT/admin/css/mystyle.css' %}" type="text/css">
-  <title>{% block title %}My Site{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'STATICROOT/admin/css/mystyle.css' %}" type="text/css">
+
+    <title>{% block title %}My Site{% endblock %}</title>
 </head>
 <body style="background-color:#AFBFC0;">
-  <nav class="navbar navbar-expand-lg navbar-light mb-4 " style="background-color:#847E89;">
-    <div class="container" >
-      <a class="navbar-brand" href="{% url 'home' %}">Examinate</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'home' %}" style="color:#ffffcc":>Home</a> {# TODO add hover color #}
-          </li>
+<nav class="navbar navbar-expand-lg navbar-light mb-4 " style="background-color:#61797b;">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">Edify</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <style>
+                .nav-link a {
+                    color: #ffffcc !important;
+                }
 
-          {% if not user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link text-nowrap" href="{% url 'signup' %}" style="color:#ffffcc">Sign up </a>
-          </li>
-          <li class="nav-item">
-          <li class="nav-item">
-            <a class="nav-link text-nowrap" href="{% url 'login' %}" style="color:#ffffcc">Log in</a>
-          </li>
-          {% else %}
-              {# Eventually we move this to one single exam management page #}
-{#              <li class="nav-item">#}
-{#                  <a class="nav-link text-nowrap" href="{% url 'upload_exam' %}">Upload Exam</a>#}
-{#              </li>#}
-              {# Eventually we only pull per user #}
-              <li class="nav-item">
-                  <a class="nav-link text-nowrap" href="{% url 'exam_list' %}"  style="color:#ffffcc; hover:#847E89;">Assessment Manager</a>
-              </li>
-          {% endif %}
-        </ul>
-      </div>
+                .nav-link:hover {
+                    color: black !important;
+                }
+            </style>
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link a" href="{% url 'home' %}" style="color:#ffffcc" :>Home</a>
+                    {# TODO add hover color #}
+                </li>
 
-    {% if user.is_authenticated %}
-      <div class="navbar-collapse w-100 order-3 dual-collapse2">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <div class="dropdown">
-                    <button class="dropbtn">{{ user.username }}</button>
-                        <div class="dropdown-content">
-                           <a class="nav-link text-nowrap" href="{% url 'logout' %}">Log out</a>
-                           <a class="nav-link text-nowrap" href="{% url 'password_change' %}">Change Password</a>
-                        </div>
-                </div>
-            </li>
-        </ul>
-      </div>
-    {% endif %}
-
-    </div>
-  </nav>
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-sm-12  col-md-12">
-        <div class="card mb-4">
-          <div class="card-body" style="background-color:#C2D3CD;">
-            {% block content %}
-            {% endblock %}
-          </div>
+                {% if not user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap" href="{% url 'signup' %}" style="color:#ffffcc">Sign up </a>
+                    </li>
+                    <li class="nav-item">
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap" href="{% url 'login' %}" style="color:#ffffcc">Log in</a>
+                    </li>
+                {% else %}
+                    {# Eventually we move this to one single exam management page #}
+                    {#              <li class="nav-item">#}
+                    {#                  <a class="nav-link text-nowrap" href="{% url 'upload_exam' %}">Upload Exam</a>#}
+                    {#              </li>#}
+                    {# Eventually we only pull per user #}
+                    <li class="nav-item">
+                        <a class="nav-link text-nowrap" href="{% url 'exam_list' %}"
+                           style="color:#ffffcc; hover:#847E89;">Assessment Manager</a>
+                    </li>
+                {% endif %}
+            </ul>
         </div>
-      </div>
+
+        {% if user.is_authenticated %}
+            <div class="navbar-collapse w-100 order-3 dual-collapse2">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <div class="dropdown">
+                            <button class="dropbtn">{{ user.username }}</button>
+                            <div class="dropdown-content">
+                                <a class="nav-link text-nowrap" href="{% url 'logout' %}">Log out</a>
+                                <a class="nav-link text-nowrap" href="{% url 'password_change' %}">Change Password</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        {% endif %}
+
     </div>
-  </div>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+</nav>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-sm-12  col-md-12">
+            <div class="card mb-4">
+                <div class="card-body" style="background-color:#C2D3CD;">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
 </body>
 </html>
