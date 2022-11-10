@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm
 from .models import Exam, Question
 from .models import exam
+import datetime
 from cv2 import cv2  # TODO move this and all marking into separate script
 # TODO not sure if I should do this, look for alternate
 from django.http import HttpResponseRedirect
@@ -17,12 +18,13 @@ from django.conf import settings
 from .utils import stackImages, recContour, getCornerPoints, reorder, splitBoxes
 
 from django.contrib.auth import get_user_model
+from pdf2image import convert_from_path
 import numpy as np
 
 User = get_user_model()
 
 ##############
-IMAGE_WIDTH = 1400
+IMAGE_WIDTH = 1200
 IMAGE_HEIGHT = 1000
 NUMBER_OF_CHOICES = 5
 
@@ -127,71 +129,8 @@ def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET reques
                 grading.append(0)
         # print(grading)
         score = (sum(grading) / number_of_questions) * 100
-        print(score)
 
-
-
-# if max_contour.size != 0 and grading_points.size != 0:
-    #     cv2.drawContours(image_max_contours, max_contour, -1, (0, 255, 0), 20)
-    #     cv2.drawContours(image_max_contours, grading_points, -1, (255, 0, 0), 20)
-    #
-    #     maxContour = reorder(max_contour)
-    #     gradingPoints = reorder(grading_points)
-    #
-    #     ptOne = np.float32(maxContour)
-    #     ptTwo = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
-    #     matrix = cv2.getPerspectiveTransform(ptOne, ptTwo)
-    #     imgWarpColored = cv2.warpPerspective(resized_image, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
-    #
-    #     ptOneGrade = np.float32(gradingPoints)
-    #     ptTwoGrade = np.float32([[0, 0], [325, 0], [0, 150], [325, 150]])
-    #     gradeMatrix = cv2.getPerspectiveTransform(ptOneGrade, ptTwoGrade)
-    #     imgGradeDisplay = cv2.warpPerspective(resized_image, gradeMatrix, (325, 150))
-    #     cv2.imshow("Grade", imgGradeDisplay)
-    #
-    #     # Apply threshold
-    #     imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
-    #     imgThresh = cv2.threshold(imgWarpGray, 170, 255, cv2.THRESH_BINARY_INV)[1]
-    #
-    #     boxes = splitBoxes(imgThresh)
-    #
-    #     # Getting the non-zero pixel value of each box
-    #     pixelVal = np.zeros((NUMBER_OF_QUESTIONS, NUMBER_OF_CHOICES))  # 5x5 b/c 5 questions and 5 answers
-    #     cols = 0
-    #     rows = 0
-    #
-    #     for image in boxes:
-    #         totalPixels = cv2.countNonZero(image)
-    #         pixelVal[rows][cols] = totalPixels
-    #         cols += 1
-    #
-    #         if cols == NUMBER_OF_CHOICES:
-    #             rows += 1
-    #             cols = 0
-    #     print(pixelVal)
-    #
-    #     # Finding index val of the markings
-    #     index = []
-    #     for x in range(0, NUMBER_OF_QUESTIONS):
-    #         questionRow = pixelVal[x]
-    #         indexVal = np.where(questionRow == np.amax(questionRow))
-    #         index.append(indexVal[0][0])
-    #     print(index)
-    #
-    #     # Grading
-    #     grading = []
-    #     for x in range(0, NUMBER_OF_QUESTIONS):
-    #         if ANSWER_KEY[x] == index[x]:
-    #             grading.append(1)
-    #         else:
-    #             grading.append(0)
-    #     # print(grading)
-    #     score = (sum(grading) / NUMBER_OF_QUESTIONS) * 100
-    #     print(score)
-    #
-    #     Exam.objects.filter(pk=pk).update(grade=score)
-    #
-    # return redirect('exam_list')
+        return score
 
 def sort_contours(cnts, method="left-to-right"):
     # initialize the reverse flag and sort index
@@ -244,6 +183,29 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     template_name = 'upload_exam.html'
 
 
+def get_images_from_pdf(image):
+    print(image)
+
+    image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
+    pages = convert_from_path(image_file_path, 500)
+
+    i = 0
+    file_name_paths = []
+    for page in pages:
+        image_file_name = 'out' + str(i) + '.jpg'
+        print(image_file_name)
+
+        jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
+        print(jpeg_file_name_path)
+        file_name_paths.append(jpeg_file_name_path)
+
+        save = page.save(jpeg_file_name_path, 'JPEG')
+        print(save)
+        i = i + 1
+
+    return file_name_paths
+
+
 class AssessStudentExamView(LoginRequiredMixin, CreateView):
     model = exam.StudentAssessment
     form_class = StudentAssessmentMarkingForm
@@ -263,7 +225,6 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
         if mark_form.is_valid():
             mark_form.instance.user = request.user
-            exam_pk = mark_form.fields["exam_assessment"]
 
             exam_pk = mark_form.data["exam_assessment"]
 
@@ -279,9 +240,28 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             print(multiple_choice_answers)
             saved_form = mark_form.save()
 
-            mark_exam(saved_form.image.name, len(multiple_choice_questions), answer_key)
+            image_paths_from_pdfs = get_images_from_pdf(saved_form.image.name)
+            print(image_paths_from_pdfs)
 
-        return render(request, 'exam_list.html')
+            scores = []
+            for image_path in image_paths_from_pdfs:
+                score = mark_exam(image_path, len(multiple_choice_questions), answer_key)
+                scores.append(score)
+                print(score)
+
+            self.context['scores'] = scores
+
+            form = StudentAssessmentMarkingForm()
+            form.getThing(request.user)  # TODO move this to an init method in the forms class
+            self.context['form'] = form
+        else:
+            form = StudentAssessmentMarkingForm()
+            form.getThing(request.user)  # TODO move this to an init method in the forms class
+            self.context.clear()
+            self.context['form'] = form
+            return render(request, 'mark_exam.html', self.context)
+
+        return render(request, 'mark_exam.html', self.context)
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):
