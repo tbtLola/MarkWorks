@@ -1,25 +1,26 @@
 import os
 
-from django.shortcuts import render, redirect
-from django.views.generic import TemplateView
-from django.views.generic import ListView, CreateView
-from django.urls import reverse_lazy
-from django.http import JsonResponse
-from .registration_form import RegistrationForm
+import numpy as np
+from cv2 import cv2  # TODO move this and all marking into separate script
+# TODO not sure if I should do this, look for alternate
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView
+from django.views.generic import TemplateView
+from pdf2image import convert_from_path
+
 from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm
 from .models import Exam, Question
 from .models import exam
-import datetime
-from cv2 import cv2  # TODO move this and all marking into separate script
-# TODO not sure if I should do this, look for alternate
-from django.http import HttpResponseRedirect
-from django.conf import settings
-from .utils import stackImages, recContour, getCornerPoints, reorder, splitBoxes
+from .registration_form import RegistrationForm
+from .utils import recContour, getCornerPoints, reorder, splitBoxes
 
-from django.contrib.auth import get_user_model
-from pdf2image import convert_from_path
-import numpy as np
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
 
 User = get_user_model()
 
@@ -28,14 +29,21 @@ IMAGE_WIDTH = 1200
 IMAGE_HEIGHT = 1000
 NUMBER_OF_CHOICES = 5
 
-
-#TODO move this into the model
+# TODO move this into the model
 MC_DiCTIONARY = {
-    "a" : 0,
-    "b" : 1,
-    "c" : 2,
-    "d" : 3,
-    "e" : 4,
+    "a": 0,
+    "b": 1,
+    "c": 2,
+    "d": 3,
+    "e": 4,
+}
+
+MC_CAP_DICTIONARY = {
+    0:"A",
+    1:"B",
+    2:"C",
+    3:"D",
+    4:"E"
 }
 
 
@@ -107,7 +115,7 @@ def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET reques
             pixelVal[rows][cols] = totalPixels
             cols += 1
 
-            if cols ==  NUMBER_OF_CHOICES:
+            if cols == NUMBER_OF_CHOICES:
                 rows += 1
                 cols = 0
         print(pixelVal)
@@ -132,6 +140,7 @@ def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET reques
 
         return score
 
+
 def sort_contours(cnts, method="left-to-right"):
     # initialize the reverse flag and sort index
     reverse = False
@@ -150,7 +159,7 @@ def sort_contours(cnts, method="left-to-right"):
     # bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
     (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
-        key=lambda b:b[1][i], reverse=reverse))
+                                        key=lambda b: b[1][i], reverse=reverse))
 
     # return the list of sorted contours and bounding boxes
     return (cnts)
@@ -217,12 +226,12 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
     def get(self, request):
         self.context.clear()
         form = StudentAssessmentMarkingForm()
-        form.getThing(request.user) #TODO move this to an init method in the forms class
+        form.getThing(request.user)  # TODO move this to an init method in the forms class
         self.context['form'] = form
 
         return render(request, 'mark_exam.html', self.context)
 
-    def post(self, request, *args, **kwargs): #TODO check if file type is pdf or jpg/png
+    def post(self, request, *args, **kwargs):  # TODO check if file type is pdf or jpg/png
         mark_form = StudentAssessmentMarkingForm(request.POST, request.FILES)
 
         if mark_form.is_valid():
@@ -256,10 +265,9 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
                 marked_student_assessment = exam.MarkedStudentAssessment(examiner_id=request.user.id,
                                                                          exam_id=exam_pk,
                                                                          grade=score,
-                                                                         name="test", #TODO update the name
-                                                                         image=image_file_name) #TODO instead of doing this maybe just use the form
+                                                                         name="test",  # TODO update the name
+                                                                         image=image_file_name)  # TODO instead of doing this maybe just use the form
                 marked_student_assessment.save()
-
 
             self.context['scores'] = scores
 
@@ -279,6 +287,35 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
         print("answer key: " + str(answer_key))
         print(len(multiple_choice_questions))
         print(multiple_choice_answers)
+
+
+class CreateMarkSheetView(LoginRequiredMixin, CreateView):
+    def get(self, request):
+
+        num_of_questions = 1
+        num_of_choices = 5
+
+        x_position = 55
+        subtract_to_center = 4
+        y_coordinate_for_letter = 726
+        box_width = 0
+
+        c = canvas.Canvas("hello.pdf")
+
+        for y in range (num_of_questions):
+            c.drawString(x_position - 35, y_coordinate_for_letter, str(y + 1) + ".")
+            for i in range(num_of_choices):
+                c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(i))
+                c.circle(x_position, 730, 10, stroke=1, fill=0)
+                x_position = x_position + 30
+                box_width = box_width + 32.5
+
+        c.rect(35, 350, box_width, 400, fill=0)
+        c.save()
+
+        os.startfile("hello.pdf")
+
+        return render(request, 'create_marksheet.html')
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):
@@ -336,7 +373,6 @@ def signup(request):
     return render(request, 'registration/signup.html', {
         'form': form
     })
-
 
 
 def get_corner_points(cont):

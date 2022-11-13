@@ -131,21 +131,22 @@
             </div>
         </div>
         <div class="col-8">
-            <form method="post" enctype="multipart/form-data" id="questionForm">
-                {% if new_exam.title %}
-                    <div class="exam_title" style="text-align: center">
-                        <h1>
-                            {{ new_exam.title }}
-                        </h1>
-                    </div>
-                {% else %}
+            {% if new_exam.title %}
+                <div class="exam_title" style="text-align: center">
+                    <h1>
+                        {{ new_exam.title }}
+                    </h1>
+                </div>
+            {% else %}
+                <form method="post" enctype="multipart/form-data" id="questionForm">
                     <div class="form-row">
                         <div class="form-group col-md-6 mb-0">
                             {% csrf_token %}
                             {{ exam_form|crispy }}
+
                         </div>
                         <div class="form-group col-md-6 mb-0">
-                            <button type="submit" class="btn btn-primary">save</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </div>
                 {% endif %}

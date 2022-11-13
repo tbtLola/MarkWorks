@@ -27,6 +27,7 @@ urlpatterns = [
     path('exams/', views.ExamListView.as_view(), name='exam_list'),
     path('exams/upload', views.UploadExamView.as_view(), name='upload_exam'),
     path('exams/mark_student', views.AssessStudentExamView.as_view(), name='mark_assessment'),
+    path('exams/mark_sheet', views.CreateMarkSheetView.as_view(), name='mark_sheet'),
 
     path('exams/create', views.CreateExamView.as_view(), name='create_exam'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
