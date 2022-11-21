@@ -292,25 +292,40 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 class CreateMarkSheetView(LoginRequiredMixin, CreateView):
     def get(self, request):
 
-        num_of_questions = 1
+        num_of_questions = 16
         num_of_choices = 5
 
         x_position = 55
         subtract_to_center = 4
         y_coordinate_for_letter = 726
+        y_coordinate_x = 0
         box_width = 0
+        circle_y_position = 730
+        box_height = 0
 
         c = canvas.Canvas("hello.pdf")
 
         for y in range (num_of_questions):
-            c.drawString(x_position - 35, y_coordinate_for_letter, str(y + 1) + ".")
+            c.drawString(x_position - 40, y_coordinate_for_letter, str(y + 1) + ".")
             for i in range(num_of_choices):
                 c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(i))
-                c.circle(x_position, 730, 10, stroke=1, fill=0)
+                c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
                 x_position = x_position + 30
-                box_width = box_width + 32.5
+            x_position = 55
+            circle_y_position = circle_y_position - 30
+            y_coordinate_for_letter = y_coordinate_for_letter - 30
+            y_coordinate_x = y_coordinate_x + 30
 
-        c.rect(35, 350, box_width, 400, fill=0)
+        for z in range(num_of_choices):
+            box_width = box_width + 32.5
+
+        for w in range(num_of_questions):
+            box_height = box_height - 36
+
+
+        print(y_coordinate_x)
+        print(num_of_questions * 32.5)
+        c.rect(35, 750, box_width, - y_coordinate_x - 10, fill=0)
         c.save()
 
         os.startfile("hello.pdf")
