@@ -39,11 +39,11 @@ MC_DiCTIONARY = {
 }
 
 MC_CAP_DICTIONARY = {
-    0:"A",
-    1:"B",
-    2:"C",
-    3:"D",
-    4:"E"
+    0: "A",
+    1: "B",
+    2: "C",
+    3: "D",
+    4: "E"
 }
 
 
@@ -291,11 +291,12 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
 class CreateMarkSheetView(LoginRequiredMixin, CreateView):
     def get(self, request):
-
-        num_of_questions = 16
-        num_of_choices = 5
-
+        x_static_position = 55
         x_position = 55
+
+        num_of_questions = 42
+        num_of_choices = 4
+
         subtract_to_center = 4
         y_coordinate_for_letter = 726
         y_coordinate_x = 0
@@ -305,16 +306,32 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 
         c = canvas.Canvas("hello.pdf")
 
-        for y in range (num_of_questions):
-            c.drawString(x_position - 40, y_coordinate_for_letter, str(y + 1) + ".")
+        print(22 / 20)
+
+        for y in range(num_of_questions):
+            print("xstaticposition" + str(x_static_position))
+            print("xposition" + str(x_position))
+            print("yposition" + str(y_coordinate_for_letter))
+            print(str(y+1))
+
+            c.drawString(x_static_position - 40, y_coordinate_for_letter, str(y + 1) + ".")
+
             for i in range(num_of_choices):
                 c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(i))
                 c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
                 x_position = x_position + 30
-            x_position = 55
+            x_position = x_static_position
             circle_y_position = circle_y_position - 30
             y_coordinate_for_letter = y_coordinate_for_letter - 30
             y_coordinate_x = y_coordinate_x + 30
+
+            if (y + 1) % 20 == 0:
+                print (y + 1)
+                x_static_position = 255
+                x_position = x_static_position
+                y_coordinate_for_letter = 726
+                circle_y_position = 730
+
 
         for z in range(num_of_choices):
             box_width = box_width + 32.5
@@ -322,9 +339,6 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         for w in range(num_of_questions):
             box_height = box_height - 36
 
-
-        print(y_coordinate_x)
-        print(num_of_questions * 32.5)
         c.rect(35, 750, box_width, - y_coordinate_x - 10, fill=0)
         c.save()
 
