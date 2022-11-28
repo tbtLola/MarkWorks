@@ -294,26 +294,24 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         x_static_position = 55
         x_position = 55
 
-        num_of_questions = 42
-        num_of_choices = 4
+        num_of_questions = 41
+        num_of_choices = 5
 
         subtract_to_center = 4
         y_coordinate_for_letter = 726
         y_coordinate_x = 0
         box_width = 0
         circle_y_position = 730
-        box_height = 0
+        new_box_position = 255
+        num_of_boxes = 1
+        y_2 = 0
 
         c = canvas.Canvas("hello.pdf")
 
         print(22 / 20)
 
+        box_heights = []
         for y in range(num_of_questions):
-            print("xstaticposition" + str(x_static_position))
-            print("xposition" + str(x_position))
-            print("yposition" + str(y_coordinate_for_letter))
-            print(str(y+1))
-
             c.drawString(x_static_position - 40, y_coordinate_for_letter, str(y + 1) + ".")
 
             for i in range(num_of_choices):
@@ -323,23 +321,34 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
             x_position = x_static_position
             circle_y_position = circle_y_position - 30
             y_coordinate_for_letter = y_coordinate_for_letter - 30
-            y_coordinate_x = y_coordinate_x + 30
+
+            if y_2 < 20:
+                y_coordinate_x = y_coordinate_x + 30
+
+            if y % 20 == 0:
+                print (y_coordinate_x)
 
             if (y + 1) % 20 == 0:
-                print (y + 1)
-                x_static_position = 255
+                print(y_coordinate_x)
+                num_of_boxes = num_of_boxes + 1
+                x_static_position = new_box_position
+                new_box_position = new_box_position + 200
                 x_position = x_static_position
                 y_coordinate_for_letter = 726
                 circle_y_position = 730
+                box_heights.append(y_coordinate_x)
+                y_coordinate_x = 0
 
+        box_heights.append(y_coordinate_x)
 
         for z in range(num_of_choices):
             box_width = box_width + 32.5
 
-        for w in range(num_of_questions):
-            box_height = box_height - 36
-
-        c.rect(35, 750, box_width, - y_coordinate_x - 10, fill=0)
+        box_x = 35
+        print(box_heights)
+        for v in range(num_of_boxes):
+            c.rect(box_x, 750, box_width, - box_heights[v] - 10, fill=0)
+            box_x = box_x + 200
         c.save()
 
         os.startfile("hello.pdf")
