@@ -17,6 +17,8 @@ from .models import Exam, Question
 from .models import exam
 from .registration_form import RegistrationForm
 from .utils import recContour, getCornerPoints, reorder, splitBoxes
+from collections import defaultdict
+from math import floor
 
 import io
 from django.http import FileResponse
@@ -294,8 +296,8 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         x_static_position = 55
         x_position = 55
 
-        num_of_questions = 41
-        num_of_choices = 5
+        num_of_questions = 60
+        num_of_choices = 4
 
         subtract_to_center = 4
         y_coordinate_for_letter = 726
@@ -303,52 +305,70 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         box_width = 0
         circle_y_position = 730
         new_box_position = 255
-        num_of_boxes = 1
-        y_2 = 0
+        box_x = 35
 
+        box_dict = defaultdict(int)
         c = canvas.Canvas("hello.pdf")
-
-        print(22 / 20)
-
-        box_heights = []
-        for y in range(num_of_questions):
-            c.drawString(x_static_position - 40, y_coordinate_for_letter, str(y + 1) + ".")
-
-            for i in range(num_of_choices):
-                c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(i))
-                c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
-                x_position = x_position + 30
-            x_position = x_static_position
-            circle_y_position = circle_y_position - 30
-            y_coordinate_for_letter = y_coordinate_for_letter - 30
-
-            if y_2 < 20:
-                y_coordinate_x = y_coordinate_x + 30
-
-            if y % 20 == 0:
-                print (y_coordinate_x)
-
-            if (y + 1) % 20 == 0:
-                print(y_coordinate_x)
-                num_of_boxes = num_of_boxes + 1
-                x_static_position = new_box_position
-                new_box_position = new_box_position + 200
-                x_position = x_static_position
-                y_coordinate_for_letter = 726
-                circle_y_position = 730
-                box_heights.append(y_coordinate_x)
-                y_coordinate_x = 0
-
-        box_heights.append(y_coordinate_x)
 
         for z in range(num_of_choices):
             box_width = box_width + 32.5
+            print(box_width)
 
-        box_x = 35
-        print(box_heights)
-        for v in range(num_of_boxes):
-            c.rect(box_x, 750, box_width, - box_heights[v] - 10, fill=0)
+        if num_of_questions <= 20:
+            box_dict[0] = num_of_questions
+        else:
+            val_1 = num_of_questions / 20
+            val_2 = num_of_questions % 20
+
+            num_of_box = floor(val_1)
+
+            for i in range(num_of_box):
+                box_dict[i] = 20
+            if val_2 > 0:
+                len1 = len(box_dict)
+                box_dict[len1] = val_2
+        print(box_dict)
+
+        question_number_offset = 40
+
+        question_number = 0
+        for i in box_dict:
+            number_of_questions_per_box = box_dict.get(i)
+            # print(number_of_questions_per_box
+
+            if question_number + 1 > 99:
+                question_number_offset = 45
+
+            for y in range(number_of_questions_per_box):
+                c.drawString(x_static_position - question_number_offset, y_coordinate_for_letter,
+                             str(question_number + 1) + ".")
+                y_coordinate_x = y_coordinate_x + 30
+
+                for m in range(num_of_choices):
+                    c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(m))
+                    c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
+                    x_position = x_position + 30
+                x_position = x_static_position
+                circle_y_position = circle_y_position - 30
+                question_number = question_number + 1
+                y_coordinate_for_letter = y_coordinate_for_letter - 30
+
+            c.rect(box_x, 750, box_width, -y_coordinate_x - 10, fill=0)
+            x_static_position = new_box_position
+            x_position = x_static_position
+            new_box_position = new_box_position + 200
             box_x = box_x + 200
+            y_coordinate_for_letter = 726
+            circle_y_position = 730
+            y_coordinate_x = 0
+
+            if box_x > 400 and box_width > 131 or (box_x > 600):
+                c.showPage()
+                x_static_position = 55
+                x_position = 55
+                new_box_position = 255
+                box_x = 35
+
         c.save()
 
         os.startfile("hello.pdf")
