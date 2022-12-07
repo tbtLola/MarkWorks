@@ -41,12 +41,13 @@ class Question(models.Model):
 class StudentAssessment(models.Model):
     user = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
     grade = models.IntegerField(null=True)
-    assessment_date = models.DateTimeField(auto_now_add=True) #TODO eventually get this from scantron
+    assessment_date = models.DateTimeField(auto_now_add=True)  # TODO eventually get this from scantron
     image = models.FileField(upload_to='exams/pdfs/', null=True)
     upload_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user
+
 
 class MarkedStudentAssessment(models.Model):
     examiner = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
@@ -56,3 +57,12 @@ class MarkedStudentAssessment(models.Model):
     image = models.FileField(upload_to='exams/completed_assessments/')
     upload_date = models.DateTimeField(null=True)
     upload_instant = models.DateTimeField(auto_now_add=True)
+
+class MarkSheet(models.Model):
+    number_of_questions = models.IntegerField()
+    number_of_choices = models.IntegerField()
+    mark_sheet_pdf = models.FileField(upload_to='exams/pdf/', null=True)
+    #StudentQR
+    #StudentName
+    #Class
+    #TestName

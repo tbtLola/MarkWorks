@@ -25,6 +25,7 @@ urlpatterns = [
     # Exam page
     path('', views.Home.as_view(), name='home'),
     path('exams/', views.ExamListView.as_view(), name='exam_list'),
+    path('classroom/', views.ClassroomView.as_view(), name='classroom'),
     path('exams/upload', views.UploadExamView.as_view(), name='upload_exam'),
     path('exams/mark_student', views.AssessStudentExamView.as_view(), name='mark_assessment'),
     path('exams/mark_sheet', views.CreateMarkSheetView.as_view(), name='mark_sheet'),

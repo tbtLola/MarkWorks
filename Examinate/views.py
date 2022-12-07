@@ -12,13 +12,14 @@ from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm
 from .models import Exam, Question
 from .models import exam
 from .registration_form import RegistrationForm
 from .utils import recContour, getCornerPoints, reorder, splitBoxes
 from collections import defaultdict
 from math import floor
+from django.http import HttpResponse
 
 import io
 from django.http import FileResponse
@@ -179,6 +180,12 @@ class ExamListView(LoginRequiredMixin, ListView):
         return render(request, 'exam_list.html', {'form': form})
 
 
+class ClassroomView(LoginRequiredMixin, ListView):
+    template_name = 'classroom.html'
+
+    def get(self, request):
+        return render(request, 'classroom.html')
+
 class AddQuestionView(ListView):
     model = Question
 
@@ -292,12 +299,26 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
 
 class CreateMarkSheetView(LoginRequiredMixin, CreateView):
+    context = {}
+
     def get(self, request):
+        form = MarkSheetForm()
+        self.context['form'] = form
+        return render(request, 'create_marksheet.html', self.context)
+
+    def post(self, request, *args, **kwargs):
+        # TODO check if form is valids
+
+        mark_sheet_form = MarkSheetForm(request.POST)
+        saved_mark_sheet_form = mark_sheet_form.save(commit=False)
+
+        print(saved_mark_sheet_form.mark_sheet_pdf)
+
         x_static_position = 55
         x_position = 55
 
-        num_of_questions = 60
-        num_of_choices = 4
+        num_of_questions = saved_mark_sheet_form.number_of_questions
+        num_of_choices = saved_mark_sheet_form.number_of_choices
 
         subtract_to_center = 4
         y_coordinate_for_letter = 726
@@ -307,12 +328,14 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         new_box_position = 255
         box_x = 35
 
-        box_dict = defaultdict(int)
-        c = canvas.Canvas("hello.pdf")
-
         for z in range(num_of_choices):
             box_width = box_width + 32.5
             print(box_width)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
+        c = canvas.Canvas(response)
+        box_dict = defaultdict(int)
 
         if num_of_questions <= 20:
             box_dict[0] = num_of_questions
@@ -327,11 +350,13 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
             if val_2 > 0:
                 len1 = len(box_dict)
                 box_dict[len1] = val_2
-        print(box_dict)
 
         question_number_offset = 40
 
         question_number = 0
+
+        c.drawString(20, 760, "Multiple Choice")
+
         for i in box_dict:
             number_of_questions_per_box = box_dict.get(i)
             # print(number_of_questions_per_box
@@ -369,11 +394,14 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
                 new_box_position = 255
                 box_x = 35
 
-        c.save()
-
+        final_pdf = c.save()
+        saved_mark_sheet_form.mark_sheet_pdf = final_pdf
         os.startfile("hello.pdf")
 
-        return render(request, 'create_marksheet.html')
+        form = MarkSheetForm()
+        self.context['form'] = form
+        # return render(request, 'create_marksheet.html', self.context)
+        return response
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):

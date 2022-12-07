@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    {% block css %}
+        <link rel="stylesheet" href="{% static 'STATICROOT/admin/css/exam_list.css' %}" type="text/css">
+    {% endblock %}
+
+    <div class="assessmentControls">
+        <h2>Classroom Manager</h2>
+        <br>
+        <a href="{% url 'create_exam' %}" class="btn btn-outline-primary btn-sm">Create a new class</a>
+        <a href="{% url 'upload_exam' %}" class="btn btn-outline-info btn-sm">View a class</a>
+        </p>
+    </div>
+    <p>
+    <table class="table mb-0">
+        <thead>
+        <tr>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Download</th>
+            <th>Delete</th>
+            <th>Mark</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for exam in exams %}
+            <tr>
+                <td>
+                    <img id=examCover src="{{ exam.image.url }}" style="width:100px">
+                </td>
+                <td>{{ exam.title }}</td>
+                <td>{{ exam.author }}</td>
+                <td>
+                    <a href="{{ exam.image.url }}" class="btn btn-primary btn-sm" target="_blank">
+                        Download Exam
+                    </a>
+                </td>
+                <td>
+                    <form method="post" action="{% url 'delete_exam' exam.pk %}">
+                        {# Also use post to modify data in the db #}
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                    <a href=""></a>
+                </td>
+                <td>
+                    <form method="post" action="{% url 'mark_exam' exam.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm">Mark</button>
+                    </form>
+                    {{ exam.grade }}}
+                </td>
+
+            </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+{% endblock %}
