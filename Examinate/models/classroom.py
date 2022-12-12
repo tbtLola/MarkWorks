@@ -17,7 +17,15 @@ class StudentClass(models.Model):
     student = models.ForeignKey("Student", on_delete=models.CASCADE)
 
 
-class TeacherClass(models.Model):
+class TeacherClass(models.Model): #TODO not needed
     classroom = models.ForeignKey("Classroom", on_delete=models.CASCADE)
     user = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
 
+
+class Csv(models.Model):
+    file_name = models.FileField(upload_to='csvs')
+    upload_time = models.DateTimeField(auto_now_add=True)
+    activated = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "File id: {self.id"

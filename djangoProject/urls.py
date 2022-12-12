@@ -31,6 +31,7 @@ urlpatterns = [
     path('exams/mark_sheet', views.CreateMarkSheetView.as_view(), name='mark_sheet'),
 
     path('exams/create', views.CreateExamView.as_view(), name='create_exam'),
+    path('class/create', views.CreateClassView.as_view(), name='create_class'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
     # path('exams/<int:pk>/mark', views.mark_exam, name='mark_exam'),
     path('accounts/', include('django.contrib.auth.urls')),

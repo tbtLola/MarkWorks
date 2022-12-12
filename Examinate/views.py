@@ -12,14 +12,15 @@ from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm
-from .models import Exam, Question
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass
+from .models import Exam, Question, Csv, Student, Classroom
 from .models import exam
 from .registration_form import RegistrationForm
 from .utils import recContour, getCornerPoints, reorder, splitBoxes
 from collections import defaultdict
 from math import floor
 from django.http import HttpResponse
+import csv
 
 import io
 from django.http import FileResponse
@@ -185,6 +186,7 @@ class ClassroomView(LoginRequiredMixin, ListView):
 
     def get(self, request):
         return render(request, 'classroom.html')
+
 
 class AddQuestionView(ListView):
     model = Question
@@ -446,6 +448,49 @@ class CreateExamView(LoginRequiredMixin, CreateView):
         self.context['question'] = questions
 
         return render(request, 'create_exam.html', self.context)
+
+
+class CreateClassView(LoginRequiredMixin, CreateView):
+    def get(self, request):
+        form = CsvModelForm(request.POST or None, request.FILES or None)
+        return render(request, 'create_class.html', {'form': form})
+
+    def post(self, request):
+        form = CsvModelForm(request.POST or None, request.FILES or None)
+        if form.is_valid():
+            csv_object = form.save()
+            form = CsvModelForm()
+            # obj = Csv.objects.filter() #This grabs all
+
+            class_room = Classroom
+            with open(csv_object.file_name.path, 'r') as f:
+                reader = csv.reader(f)
+
+                for i, row in enumerate(reader):
+                    if i == 0:
+                        pass
+                    else:
+                        row = ",".join(row)
+                        print(row)
+                        # row = row.replace(",", " ")
+                        row = row.split(",")
+                        print(row)
+
+                        if i == 1:
+                            class_room = Classroom.objects.create(name=row[2], user=request.user)
+
+                        student_name = row[0]
+                        student_identifier = row[1]
+                        new_student = Student.objects.create(name=student_name, student_number=student_identifier)
+
+                        StudentClass.objects.create(
+                            classroom=class_room,
+                            student=new_student
+
+                        )
+
+
+        return render(request, 'create_class.html', {'form': form})
 
 
 def signup(request):

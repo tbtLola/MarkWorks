@@ -62,3 +62,9 @@ class MarkSheetForm(forms.ModelForm):
     class Meta:
         model = MarkSheet
         fields = ('number_of_questions', 'number_of_choices')
+
+
+class CsvModelForm(forms.ModelForm):
+    class Meta:
+        model = Csv
+        fields = ('file_name',)
