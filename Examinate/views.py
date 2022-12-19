@@ -12,7 +12,7 @@ from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, TeacherClass
 from .models import Exam, Question, Csv, Student, Classroom
 from .models import exam
 from .registration_form import RegistrationForm
@@ -305,6 +305,7 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 
     def get(self, request):
         form = MarkSheetForm()
+        form.get_teacher_class(request.user)
         self.context['form'] = form
         return render(request, 'create_marksheet.html', self.context)
 
@@ -478,6 +479,10 @@ class CreateClassView(LoginRequiredMixin, CreateView):
 
                         if i == 1:
                             class_room = Classroom.objects.create(name=row[2], user=request.user)
+                            TeacherClass.objects.create(
+                                classroom=class_room,
+                                user=request.user
+                            )
 
                         student_name = row[0]
                         student_identifier = row[1]
@@ -486,7 +491,6 @@ class CreateClassView(LoginRequiredMixin, CreateView):
                         StudentClass.objects.create(
                             classroom=class_room,
                             student=new_student
-
                         )
 
 

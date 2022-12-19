@@ -34,12 +34,9 @@ class StudentAssessmentMarkingForm(forms.ModelForm):
         fields = ('image', 'exam_assessment')
 
     def getThing(self, user):
-        unfilter = Exam.objects.all()
         all__filter = Exam.objects.all().filter(user=user)
         self.fields['exam_assessment'] = forms.ModelChoiceField(label="Item Choices", queryset=all__filter,
                                                                 required=True)
-        print(all__filter)
-        print(unfilter)
 
     def __init__(self, *args, **kwargs):
         super(StudentAssessmentMarkingForm, self).__init__(*args, **kwargs)
@@ -58,6 +55,12 @@ class QuestionForm(forms.ModelForm):
 class MarkSheetForm(forms.ModelForm):
     number_of_questions = forms.IntegerField()
     number_of_choices = forms.IntegerField() #TODO put a cap of 7 on this
+
+    teacher_class = forms.ModelChoiceField(label="Select a class", queryset=TeacherClass.objects.all(), required=True)
+
+    def get_teacher_class(self, user):
+        class_filtered_by_teacher = TeacherClass.objects.all().filter(user=user)
+        print(class_filtered_by_teacher)
 
     class Meta:
         model = MarkSheet
