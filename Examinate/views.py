@@ -12,7 +12,8 @@ from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, TeacherClass
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, \
+    TeacherClass
 from .models import Exam, Question, Csv, Student, Classroom
 from .models import exam
 from .registration_form import RegistrationForm
@@ -451,6 +452,28 @@ class CreateExamView(LoginRequiredMixin, CreateView):
         return render(request, 'create_exam.html', self.context)
 
 
+class EditClassView(LoginRequiredMixin, ListView):
+    context = {}
+
+    def get(self, request, **kwargs):
+        class_list = Classroom.objects.all().filter(user=request.user)
+        self.context['class_list'] = class_list
+        student_class_list = StudentClass.objects.all().filter(classroom__in=class_list)
+        self.context['student_class'] = student_class_list
+
+        self.context['students'] = student_class_list.values('student')
+
+
+        print(class_list)
+        print(student_class_list)
+        return render(request, 'view_class.html', self.context)
+
+
+def selectClass(request, pk):
+    print("test")
+    return render(request, 'view_class.html')
+
+
 class CreateClassView(LoginRequiredMixin, CreateView):
     def get(self, request):
         form = CsvModelForm(request.POST or None, request.FILES or None)
@@ -492,7 +515,6 @@ class CreateClassView(LoginRequiredMixin, CreateView):
                             classroom=class_room,
                             student=new_student
                         )
-
 
         return render(request, 'create_class.html', {'form': form})
 

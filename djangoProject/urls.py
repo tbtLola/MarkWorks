@@ -32,13 +32,16 @@ urlpatterns = [
 
     path('exams/create', views.CreateExamView.as_view(), name='create_exam'),
     path('class/create', views.CreateClassView.as_view(), name='create_class'),
+    path('class/view', views.EditClassView.as_view(), name='view_class'),
     path('exams/<int:pk>/', views.delete_exam, name='delete_exam'),
+    path('selectClass/<int:pk>', views.selectClass, name="selectClass"),
     # path('exams/<int:pk>/mark', views.mark_exam, name='mark_exam'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('admin/', admin.site.urls),
 
     path('add_question/', views.AddQuestionView.as_view(), name='add_question'),
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
+
 
     # Sign up page
     path('signup/', views.signup, name='signup'),

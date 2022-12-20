@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+
+        <div class="col-4">
+            {% if class_list %}
+                <div class="list-group" id="list-tab" role="tablist">
+                    {% for class in class_list %}
+                        <a class="list-group-item list-group-item-action" id="list-{{ class.id }}-list"
+                           data-toggle="list"
+                           href="#list-{{ class.id }}" role="tab"
+                           aria-controls="{{ class.id }}">
+                            {{ class.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-8">
+            <div class="tab-content" id="nav-tabContent">
+                {% for class in class_list %}
+                    <div class="tab-pane fade" id="list-{{ class.id }}" role="tabpanel"
+                         aria-labelledby=list-{{ class.id }}-list>
+                        <h2>{{ class.name }}</h2>
+                        <div class="list-group" id="list-tab" role="tablist">
+                            {% for student in student_class %}
+                                {% if student.classroom.id == class.id %}
+                                    <div class="list-group-item">
+                                        {{ student.student.name }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
