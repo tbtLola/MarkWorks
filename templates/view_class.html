@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load crispy_forms_tags %}
+
 
 {% block content %}
     <div class="row">
@@ -29,8 +31,8 @@
                         <table class="table mb-0 table-hover" cellspacing="0">
                             <thead-dark>
                                 <tr>
-                                    <th scope="col">student first name</th>
-                                    <th scope="col">student last name</th>
+                                    <th scope="col">first name</th>
+                                    <th scope="col">last name</th>
                                     <th scope="col">student id</th>
                                     <th scope="col">delete</th>
                                     <th scope="col">edit</th>
@@ -57,26 +59,50 @@
 
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal"
-                                                        data-target="#editStudentModal">
+                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                        data-toggle="modal"
+                                                        data-target="#editStudentModal{{ student.student.id }}">
                                                     Edit
                                                 </button>
-                                                <div class="modal fade" id="editStudentModal" tabindex="-1"
+                                                <div class="modal fade" id="editStudentModal{{ student.student.id }}"
+                                                     tabindex="-1"
                                                      role="dialog" aria-labelledby="editStudentModalTitle"
                                                      aria-hidden="true">
                                                     <div class="modal-dialog modal-lg" role="document">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h5 class="modal-title" id="editStudentModalTitle">
+                                                                <h4 class="modal-title" id="editStudentModalTitle">
                                                                     Edit student
-                                                                </h5>
+                                                                </h4>
+                                                                <br>
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                        aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
                                                             </div>
+                                                            <form method="post" enctype="multipart/form-data"
+                                                                  id="studentForm"
+                                                                  action={% url 'edit_student' student.student_id %}>
+                                                                <div style="padding: 20px">
+                                                                    <h5>
+                                                                        Nothing will be changed if fields are blank
+                                                                    </h5>
+
+                                                                    {% csrf_token %}
+                                                                    {{ form.media }}
+                                                                    {{ form|crispy }}
+                                                                    <button type="submit" class="btn btn-primary">Save
+                                                                        changes
+                                                                    </button>
+                                                                </div>
+                                                            </form>
                                                         </div>
-                                                        <form>
-                                                            <button type="submit" class="btn btn-secondary btn-sm">
-                                                                Update!
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary"
+                                                                    data-dismiss="modal"
+                                                                    onclick="myFunction()">Close
                                                             </button>
-                                                        </form>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>

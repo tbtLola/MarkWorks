@@ -12,9 +12,9 @@ from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, \
-    TeacherClass
-from .models import Exam, Question, Csv, Student, Classroom
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, StudentEditForm
+
+from .models import Exam, Question, Csv, Student, Classroom, TeacherClass
 from .models import exam
 from .registration_form import RegistrationForm
 from .utils import recContour, getCornerPoints, reorder, splitBoxes
@@ -445,6 +445,7 @@ class CreateExamView(LoginRequiredMixin, CreateView):
 class EditClassView(LoginRequiredMixin, ListView):
     context = {}
     def get(self, request, **kwargs):
+        self.context['form'] = StudentEditForm()
         class_list = Classroom.objects.all().filter(user=request.user)
         self.context['class_list'] = class_list
         student_class_list = StudentClass.objects.all().filter(classroom__in=class_list)
@@ -542,4 +543,20 @@ def delete_student(request, pk):
     if request.method == 'POST':
         student = Student.objects.get(pk=pk)
         student.delete()
+    return redirect('view_class')
+
+
+def edit_student(request, pk):
+    form = StudentEditForm(request.POST)
+    student = form.save(commit=False)
+
+    student_to_update = Student.objects.all().filter(id=pk)
+
+    if len(student.first_name) != 0:
+        student_to_update.update(first_name=student.first_name)
+    if len(student.last_name) != 0:
+        student_to_update.update(last_name=student.last_name)
+    if len(student.student_number) != 0:
+        student_to_update.update(student_number=student.student_number)
+
     return redirect('view_class')

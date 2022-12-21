@@ -1,10 +1,8 @@
-from django import forms
-from .models import *
-from crispy_forms_gds.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
-
 from ckeditor_uploader.fields import RichTextUploadingField
+from crispy_forms_gds.helper import FormHelper
+from django import forms
+
+from .models import *
 
 
 class UploadForms(forms.Form):
@@ -87,3 +85,11 @@ class CsvModelForm(forms.ModelForm):
         model = Csv
         fields = ('file_name',)
 
+class StudentEditForm(forms.ModelForm):
+    first_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=False)
+    student_number = forms.CharField(required=False)
+
+    class Meta:
+        model = Student
+        fields = '__all__'
