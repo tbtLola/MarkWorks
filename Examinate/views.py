@@ -575,3 +575,12 @@ def edit_student(request, pk, name):
 
 
     return redirect('view_class')
+
+
+def delete_class(request, pk, classname):
+    if request.method=='POST':
+        classroom = Classroom.objects.get(pk=pk)
+        classroom.delete()
+
+        messages.success(request, "Successfully deleted the class " + classname)
+    return redirect('view_class')
