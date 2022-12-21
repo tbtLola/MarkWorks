@@ -4,6 +4,12 @@
 
 
 {% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            {{ message }}
+            <br>
+        {% endfor %}
+    {% endif %}
     <div class="row">
 
         <div class="col-4">
@@ -82,7 +88,7 @@
                                                             </div>
                                                             <form method="post" enctype="multipart/form-data"
                                                                   id="studentForm"
-                                                                  action={% url 'edit_student' student.student_id %}>
+                                                                  action={% url 'edit_student' student.student_id class.name%}>
                                                                 <div style="padding: 20px">
                                                                     <h5>
                                                                         Nothing will be changed if fields are blank

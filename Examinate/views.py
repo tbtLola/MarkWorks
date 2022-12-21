@@ -4,6 +4,7 @@ import numpy as np
 from cv2 import cv2  # TODO move this and all marking into separate script
 # TODO not sure if I should do this, look for alternate
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
@@ -546,17 +547,28 @@ def delete_student(request, pk):
     return redirect('view_class')
 
 
-def edit_student(request, pk):
+def edit_student(request, pk, name):
     form = StudentEditForm(request.POST)
     student = form.save(commit=False)
 
     student_to_update = Student.objects.all().filter(id=pk)
+    old_student = student_to_update
+
+    print(old_student.values("first_name").first().get('first_name'))
 
     if len(student.first_name) != 0:
+        old_first_name = old_student.values("first_name").first().get('first_name')
         student_to_update.update(first_name=student.first_name)
+        messages.success(request, "Successfully changed the first name " + old_first_name + " to " + student.first_name + " for the class " + name + ".")
     if len(student.last_name) != 0:
+        old_last_name = old_student.values("last_name").first().get('last_name')
         student_to_update.update(last_name=student.last_name)
+        messages.success(request, "Successfully changed the last name " + old_last_name + " to " + student.last_name + " for the class " + name + ".")
     if len(student.student_number) != 0:
+        old_student_number = old_student.values("student_number").first().get('student_number')
         student_to_update.update(student_number=student.student_number)
+        messages.success(request, "Successfully changed the student number " + old_student_number + " to " + student.student_number + " for the class " + name + ".")
+
+
 
     return redirect('view_class')
