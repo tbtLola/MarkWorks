@@ -540,10 +540,13 @@ def delete_exam(request, pk):
     return redirect('exam_list')
 
 
-def delete_student(request, pk):
+def delete_student(request, pk, classname):
     if request.method == 'POST':
         student = Student.objects.get(pk=pk)
+        student_first_name = student.first_name
         student.delete()
+
+        messages.success(request, "Successfully removed " + student_first_name + " from " + classname)
     return redirect('view_class')
 
 
