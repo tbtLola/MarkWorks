@@ -49,16 +49,36 @@
                                                 {{ student.student.student_number }}
                                             </td>
                                             <td>
-                                                <form method="post" action={% url 'delete_student' student.student.id %}>
+                                                <form method="post"
+                                                      action={% url 'delete_student' student.student.id %}>
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                                                 </form>
 
                                             </td>
                                             <td>
-                                                <form>
-                                                    <button type="submit" class="btn btn-secondary btn-sm">Edit</button>
-                                                </form>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal"
+                                                        data-target="#editStudentModal">
+                                                    Edit
+                                                </button>
+                                                <div class="modal fade" id="editStudentModal" tabindex="-1"
+                                                     role="dialog" aria-labelledby="editStudentModalTitle"
+                                                     aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="editStudentModalTitle">
+                                                                    Edit student
+                                                                </h5>
+                                                            </div>
+                                                        </div>
+                                                        <form>
+                                                            <button type="submit" class="btn btn-secondary btn-sm">
+                                                                Update!
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     {% endif %}
