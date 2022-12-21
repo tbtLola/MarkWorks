@@ -1,5 +1,9 @@
 from django import forms
 from .models import *
+from crispy_forms_gds.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
+
 from ckeditor_uploader.fields import RichTextUploadingField
 
 
@@ -68,6 +72,18 @@ class MarkSheetForm(forms.ModelForm):
 
 
 class CsvModelForm(forms.ModelForm):
+    file_name = forms.FileField( label="",
+        help_text="Select the CSV file to upload.",
+                                 required=False
+      )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.form_class = 'crispy_forms.helper.FormHelper'
+        self.helper.form_tag = False
+
     class Meta:
         model = Csv
         fields = ('file_name',)
+

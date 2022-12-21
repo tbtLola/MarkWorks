@@ -23,16 +23,49 @@
                 {% for class in class_list %}
                     <div class="tab-pane fade" id="list-{{ class.id }}" role="tabpanel"
                          aria-labelledby=list-{{ class.id }}-list>
-                        <h2>{{ class.name }}</h2>
-                        <div class="list-group" id="list-tab" role="tablist">
-                            {% for student in student_class %}
-                                {% if student.classroom.id == class.id %}
-                                    <div class="list-group-item">
-                                        {{ student.student.name }}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
+                        <div style="text-align: center">
+                            <h2>{{ class.name }}</h2>
                         </div>
+                        <table class="table mb-0 table-hover" cellspacing="0">
+                            <thead-dark>
+                                <tr>
+                                    <th scope="col">student first name</th>
+                                    <th scope="col">student last name</th>
+                                    <th scope="col">student id</th>
+                                    <th scope="col">delete</th>
+                                    <th scope="col">edit</th>
+                                </tr>
+                                <tbody>
+                                {% for student in student_class %}
+                                    {% if student.classroom.id == class.id %}
+                                        <tr>
+                                            <td>
+                                                {{ student.student.first_name }}
+                                            </td>
+                                            <td>
+                                                {{ student.student.last_name }}
+                                            </td>
+                                            <td>
+                                                {{ student.student.student_number }}
+                                            </td>
+                                            <td>
+                                                <form method="post" action={% url 'delete_student' student.student.id %}>
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                                </form>
+
+                                            </td>
+                                            <td>
+                                                <form>
+                                                    <button type="submit" class="btn btn-secondary btn-sm">Edit</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+
+                                </tbody>
+                        </table>
                     </div>
                 {% endfor %}
             </div>

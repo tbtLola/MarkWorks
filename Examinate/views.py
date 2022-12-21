@@ -58,13 +58,6 @@ class Home(TemplateView):
     template_name = 'home.html'
 
 
-def delete_exam(request, pk):
-    if request.method == 'POST':
-        exam = Exam.objects.get(pk=pk)
-        exam.delete()
-    return redirect('exam_list')
-
-
 def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET requests
 
     image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
@@ -170,28 +163,28 @@ def sort_contours(cnts, method="left-to-right"):
     return (cnts)
 
 
+
+
 class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exam_list.html'
     context_object_name = 'exams'
-
-    # form_class = QuestionForm
-
     def get(self, request):
         form = QuestionForm()
         return render(request, 'exam_list.html', {'form': form})
 
+    # form_class = QuestionForm
+
+
 
 class ClassroomView(LoginRequiredMixin, ListView):
     template_name = 'classroom.html'
-
     def get(self, request):
         return render(request, 'classroom.html')
 
 
 class AddQuestionView(ListView):
     model = Question
-
     def get(self, request):
         form = QuestionForm()
         return render(request, 'add_question.html', {'form': form})
@@ -202,8 +195,6 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     form_class = ExamForm
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
-
-
 def get_images_from_pdf(image):
     print(image)
 
@@ -228,13 +219,14 @@ def get_images_from_pdf(image):
     return file_name_paths
 
 
+
+
 class AssessStudentExamView(LoginRequiredMixin, CreateView):
     model = exam.StudentAssessment
     form_class = StudentAssessmentMarkingForm
     success_url = reverse_lazy('exam_list')
     template_name = 'mark_exam.html'
     context = {}
-
     def get(self, request):
         self.context.clear()
         form = StudentAssessmentMarkingForm()
@@ -303,7 +295,6 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
 class CreateMarkSheetView(LoginRequiredMixin, CreateView):
     context = {}
-
     def get(self, request):
         form = MarkSheetForm()
         form.get_teacher_class(request.user)
@@ -411,7 +402,6 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 class CreateExamView(LoginRequiredMixin, CreateView):
     # model = Question
     context = {}
-
     def get(self, request):
         self.context['form'] = QuestionForm()
         self.context['exam_form'] = ExamForm()
@@ -454,7 +444,6 @@ class CreateExamView(LoginRequiredMixin, CreateView):
 
 class EditClassView(LoginRequiredMixin, ListView):
     context = {}
-
     def get(self, request, **kwargs):
         class_list = Classroom.objects.all().filter(user=request.user)
         self.context['class_list'] = class_list
@@ -467,20 +456,23 @@ class EditClassView(LoginRequiredMixin, ListView):
         print(class_list)
         print(student_class_list)
         return render(request, 'view_class.html', self.context)
-
-
 def selectClass(request, pk):
     print("test")
     return render(request, 'view_class.html')
 
 
+
+
 class CreateClassView(LoginRequiredMixin, CreateView):
+
+    print("test")
     def get(self, request):
-        form = CsvModelForm(request.POST or None, request.FILES or None)
+        form = CsvModelForm(request.POST, request.FILES)
         return render(request, 'create_class.html', {'form': form})
 
-    def post(self, request):
+    def post(self, request, **kwargs):
         form = CsvModelForm(request.POST or None, request.FILES or None)
+        print("test")
         if form.is_valid():
             csv_object = form.save()
             form = CsvModelForm()
@@ -501,15 +493,18 @@ class CreateClassView(LoginRequiredMixin, CreateView):
                         print(row)
 
                         if i == 1:
-                            class_room = Classroom.objects.create(name=row[2], user=request.user)
+                            class_room = Classroom.objects.create(name=row[3], user=request.user)
                             TeacherClass.objects.create(
                                 classroom=class_room,
                                 user=request.user
                             )
 
-                        student_name = row[0]
-                        student_identifier = row[1]
-                        new_student = Student.objects.create(name=student_name, student_number=student_identifier)
+                        student_first_name = row[0]
+                        student_last_name = row[1]
+                        student_identifier = row[2]
+                        new_student = Student.objects.create(first_name=student_first_name,
+                                                             last_name=student_last_name,
+                                                             student_number=student_identifier)
 
                         StudentClass.objects.create(
                             classroom=class_room,
@@ -517,8 +512,6 @@ class CreateClassView(LoginRequiredMixin, CreateView):
                         )
 
         return render(request, 'create_class.html', {'form': form})
-
-
 def signup(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -536,3 +529,17 @@ def get_corner_points(cont):
     perimeter = cv2.arcLength(cont, True)
     approximation = cv2.approxPolyDP(cont, 0.02 * perimeter, True)
     return approximation
+
+
+def delete_exam(request, pk):
+    if request.method == 'POST':
+        exam = Exam.objects.get(pk=pk)
+        exam.delete()
+    return redirect('exam_list')
+
+
+def delete_student(request, pk):
+    if request.method == 'POST':
+        student = Student.objects.get(pk=pk)
+        student.delete()
+    return redirect('view_class')
