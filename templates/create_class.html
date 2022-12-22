@@ -4,11 +4,11 @@
 {% block content %}
     <h1>Create Class</h1>
     <p>
-    Upload a csv file with the headers in the following format:
-    student_first_name,student_last_name,student_number,class name
-    <br>
-    For example, <br>
+    Please use the following example when generating the csv:
+    <br><br>
 
+    student_first_name,student_last_name,student_number,class_name <br>
+    tony,tea,10125896,Bio 30
 
     </p>
     <form method="POST" action="/class/create" enctype="multipart/form-data">

@@ -15,6 +15,9 @@ class Classroom(models.Model):
     user = models.ForeignKey("UserProfile", on_delete=models.CASCADE)
     creation_date = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.name
+
 
 class StudentClass(models.Model):
     classroom = models.ForeignKey("Classroom", on_delete=models.CASCADE)
