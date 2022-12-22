@@ -308,7 +308,16 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         mark_sheet_form = MarkSheetForm(request.POST)
         saved_mark_sheet_form = mark_sheet_form.save(commit=False)
 
-        print(saved_mark_sheet_form.mark_sheet_pdf)
+        print(saved_mark_sheet_form.classroom.id)
+
+        students = StudentClass.objects.filter(classroom=saved_mark_sheet_form.classroom).values('student')
+
+        student_ids = []
+        for x in students:
+            student_ids.append(x.get('student'))
+
+        students = Student.objects.filter(id__in=student_ids)
+
 
         x_static_position = 55
         x_position = 55

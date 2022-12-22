@@ -61,6 +61,7 @@ class MarkedStudentAssessment(models.Model):
 class MarkSheet(models.Model):
     number_of_questions = models.IntegerField()
     number_of_choices = models.IntegerField()
+    classroom = models.ForeignKey("Classroom", on_delete=models.CASCADE, null=True)
     mark_sheet_pdf = models.FileField(upload_to='exams/pdf/', null=True)
     #StudentQR
     #StudentName
