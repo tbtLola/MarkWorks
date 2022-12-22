@@ -319,85 +319,94 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         students = Student.objects.filter(id__in=student_ids)
 
 
-        x_static_position = 55
-        x_position = 55
-
-        num_of_questions = saved_mark_sheet_form.number_of_questions
-        num_of_choices = saved_mark_sheet_form.number_of_choices
-
-        subtract_to_center = 4
-        y_coordinate_for_letter = 726
-        y_coordinate_x = 0
-        box_width = 0
-        circle_y_position = 730
-        new_box_position = 255
-        box_x = 35
-
-        for z in range(num_of_choices):
-            box_width = box_width + 32.5
-            print(box_width)
-
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
         c = canvas.Canvas(response)
-        box_dict = defaultdict(int)
 
-        if num_of_questions <= 20:
-            box_dict[0] = num_of_questions
-        else:
-            val_1 = num_of_questions / 20
-            val_2 = num_of_questions % 20
+        for student in students:
 
-            num_of_box = floor(val_1)
+            student_first_name = student.first_name
+            student_last_name = student.last_name
+            student_name = student_first_name + " " + student_last_name
 
-            for i in range(num_of_box):
-                box_dict[i] = 20
-            if val_2 > 0:
-                len1 = len(box_dict)
-                box_dict[len1] = val_2
+            x_static_position = 55
+            x_position = 55
 
-        question_number_offset = 40
+            num_of_questions = saved_mark_sheet_form.number_of_questions
+            num_of_choices = saved_mark_sheet_form.number_of_choices
 
-        question_number = 0
-
-        c.drawString(20, 760, "Multiple Choice")
-
-        for i in box_dict:
-            number_of_questions_per_box = box_dict.get(i)
-            # print(number_of_questions_per_box
-
-            if question_number + 1 > 99:
-                question_number_offset = 45
-
-            for y in range(number_of_questions_per_box):
-                c.drawString(x_static_position - question_number_offset, y_coordinate_for_letter,
-                             str(question_number + 1) + ".")
-                y_coordinate_x = y_coordinate_x + 30
-
-                for m in range(num_of_choices):
-                    c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(m))
-                    c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
-                    x_position = x_position + 30
-                x_position = x_static_position
-                circle_y_position = circle_y_position - 30
-                question_number = question_number + 1
-                y_coordinate_for_letter = y_coordinate_for_letter - 30
-
-            c.rect(box_x, 750, box_width, -y_coordinate_x - 10, fill=0)
-            x_static_position = new_box_position
-            x_position = x_static_position
-            new_box_position = new_box_position + 200
-            box_x = box_x + 200
+            subtract_to_center = 4
             y_coordinate_for_letter = 726
-            circle_y_position = 730
             y_coordinate_x = 0
+            box_width = 0
+            circle_y_position = 730
+            new_box_position = 255
+            box_x = 35
 
-            if box_x > 400 and box_width > 131 or (box_x > 600):
-                c.showPage()
-                x_static_position = 55
-                x_position = 55
-                new_box_position = 255
-                box_x = 35
+            for z in range(num_of_choices):
+                box_width = box_width + 32.5
+                print(box_width)
+
+            box_dict = defaultdict(int)
+
+            if num_of_questions <= 20:
+                box_dict[0] = num_of_questions
+            else:
+                val_1 = num_of_questions / 20
+                val_2 = num_of_questions % 20
+
+                num_of_box = floor(val_1)
+
+                for i in range(num_of_box):
+                    box_dict[i] = 20
+                if val_2 > 0:
+                    len1 = len(box_dict)
+                    box_dict[len1] = val_2
+
+            question_number_offset = 40
+
+            question_number = 0
+
+            c.drawString(20, 780, student_name)
+            c.drawString(20, 760, "Multiple Choice")
+
+            for i in box_dict:
+                number_of_questions_per_box = box_dict.get(i)
+                # print(number_of_questions_per_box
+
+                if question_number + 1 > 99:
+                    question_number_offset = 45
+
+                for y in range(number_of_questions_per_box):
+                    c.drawString(x_static_position - question_number_offset, y_coordinate_for_letter,
+                                 str(question_number + 1) + ".")
+                    y_coordinate_x = y_coordinate_x + 30
+
+                    for m in range(num_of_choices):
+                        c.drawString(x_position - subtract_to_center, y_coordinate_for_letter, MC_CAP_DICTIONARY.get(m))
+                        c.circle(x_position, circle_y_position, 10, stroke=1, fill=0)
+                        x_position = x_position + 30
+                    x_position = x_static_position
+                    circle_y_position = circle_y_position - 30
+                    question_number = question_number + 1
+                    y_coordinate_for_letter = y_coordinate_for_letter - 30
+
+                c.rect(box_x, 750, box_width, -y_coordinate_x - 10, fill=0)
+                x_static_position = new_box_position
+                x_position = x_static_position
+                new_box_position = new_box_position + 200
+                box_x = box_x + 200
+                y_coordinate_for_letter = 726
+                circle_y_position = 730
+                y_coordinate_x = 0
+
+                if box_x > 400 and box_width > 131 or (box_x > 600):
+                    c.showPage()
+                    x_static_position = 55
+                    x_position = 55
+                    new_box_position = 255
+                    box_x = 35
+            c.showPage()
 
         final_pdf = c.save()
         saved_mark_sheet_form.mark_sheet_pdf = final_pdf
