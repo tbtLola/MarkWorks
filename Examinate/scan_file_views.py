@@ -24,7 +24,7 @@ def scan_file(request):
   #  if request.method == 'POST':
     form = UploadForms(request.POST, request.FILES)
     file = request.FILES['file']
-    path = default_storage.save('tmp/someimg', ContentFile(file.read()))
+    path = default_storage.save()
     img = cv2.imread(path)
 
     print(file.name)

@@ -91,4 +91,4 @@ class StudentEditForm(forms.ModelForm):
 
     class Meta:
         model = Student
-        fields = '__all__'
+        exclude = ('id', 'qr_code',)

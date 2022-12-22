@@ -212,7 +212,7 @@ def get_images_from_pdf(image):
         print(jpeg_file_name_path)
         file_name_paths.append(jpeg_file_name_path)
 
-        save = page.save(jpeg_file_name_path, 'JPEG')
+        save = page.save()
         print(save)
         print(save.url)
         i = i + 1
@@ -263,7 +263,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             for page in pages:
                 image_file_name = 'out' + str(i) + '.jpg'
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
-                page.save(jpeg_file_name_path, 'JPEG')
+                page.save()
                 i = i + 1
                 score = mark_exam(jpeg_file_name_path, len(multiple_choice_questions), answer_key)
                 scores.append(score)
@@ -294,9 +294,11 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
         print(multiple_choice_answers)
 
 
-def generate_exam_pdf(c, saved_mark_sheet_form, student):
+def generate_exam_pdf(c, saved_mark_sheet_form, student, classroom):
     student_first_name = student.first_name
     student_last_name = student.last_name
+    student_qr_code_path = student.qr_code.path
+
     student_name = student_first_name + " " + student_last_name
     x_static_position = 55
     x_position = 55
@@ -328,8 +330,10 @@ def generate_exam_pdf(c, saved_mark_sheet_form, student):
             box_dict[len1] = val_2
     question_number_offset = 40
     question_number = 0
-    c.drawString(20, 780, student_name)
-    c.drawString(20, 760, "Multiple Choice")
+    c.drawInlineImage(student_qr_code_path, 520, 765, width=70, height=70)
+    c.drawString(20, 820, classroom)
+    c.drawString(20, 800, student_name)
+    c.drawString(20, 770, "Multiple Choice")
     for i in box_dict:
         number_of_questions_per_box = box_dict.get(i)
         # print(number_of_questions_per_box
@@ -365,6 +369,8 @@ def generate_exam_pdf(c, saved_mark_sheet_form, student):
             x_static_position = 55
             x_position = 55
             new_box_position = 255
+            c.drawString(20, 820, classroom)
+            c.drawString(20, 800, student_name)
             box_x = 35
     c.showPage()
 
@@ -383,9 +389,8 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         mark_sheet_form = MarkSheetForm(request.POST)
         saved_mark_sheet_form = mark_sheet_form.save(commit=False)
 
-        print(saved_mark_sheet_form.classroom.id)
-
-        students = StudentClass.objects.filter(classroom=saved_mark_sheet_form.classroom).values('student')
+        classroom = saved_mark_sheet_form.classroom
+        students = StudentClass.objects.filter(classroom=classroom).values('student')
 
         student_ids = []
         for x in students:
@@ -400,7 +405,7 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 
         for student in students:
 
-            generate_exam_pdf(c, saved_mark_sheet_form, student)
+            generate_exam_pdf(c, saved_mark_sheet_form, student, classroom.name)
 
         final_pdf = c.save()
         saved_mark_sheet_form.mark_sheet_pdf = final_pdf
@@ -416,6 +421,7 @@ class CreateExamView(LoginRequiredMixin, CreateView):
     # model = Question
     context = {}
     def get(self, request):
+        self.context['form'] = QuestionForm()
         self.context['form'] = QuestionForm()
         self.context['exam_form'] = ExamForm()
         self.context['question'] = Question.objects.all()
