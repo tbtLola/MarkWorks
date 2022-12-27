@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import math
 from cv2 import cv2  # TODO move this and all marking into separate script
 # TODO not sure if I should do this, look for alternate
 from django.conf import settings
@@ -12,8 +13,10 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
+from pyzbar.pyzbar import decode
 
-from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, StudentEditForm
+from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, \
+    StudentEditForm
 
 from .models import Exam, Question, Csv, Student, Classroom, TeacherClass
 from .models import exam
@@ -164,12 +167,11 @@ def sort_contours(cnts, method="left-to-right"):
     return (cnts)
 
 
-
-
 class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
     template_name = 'exam_list.html'
     context_object_name = 'exams'
+
     def get(self, request):
         form = QuestionForm()
         return render(request, 'exam_list.html', {'form': form})
@@ -177,15 +179,16 @@ class ExamListView(LoginRequiredMixin, ListView):
     # form_class = QuestionForm
 
 
-
 class ClassroomView(LoginRequiredMixin, ListView):
     template_name = 'classroom.html'
+
     def get(self, request):
         return render(request, 'classroom.html')
 
 
 class AddQuestionView(ListView):
     model = Question
+
     def get(self, request):
         form = QuestionForm()
         return render(request, 'add_question.html', {'form': form})
@@ -196,6 +199,8 @@ class UploadExamView(LoginRequiredMixin, CreateView):
     form_class = ExamForm
     success_url = reverse_lazy('exam_list')
     template_name = 'upload_exam.html'
+
+
 def get_images_from_pdf(image):
     print(image)
 
@@ -220,14 +225,13 @@ def get_images_from_pdf(image):
     return file_name_paths
 
 
-
-
 class AssessStudentExamView(LoginRequiredMixin, CreateView):
     model = exam.StudentAssessment
     form_class = StudentAssessmentMarkingForm
     success_url = reverse_lazy('exam_list')
     template_name = 'mark_exam.html'
     context = {}
+
     def get(self, request):
         self.context.clear()
         form = StudentAssessmentMarkingForm()
@@ -260,12 +264,19 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
             i = 0
             scores = []
+
+            number_of_questions = len(multiple_choice_questions)
+
+            get_questions_per_box(number_of_questions)
+
+            print(number_of_questions)
+
             for page in pages:
                 image_file_name = 'out' + str(i) + '.jpg'
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
-                page.save()
+                page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
-                score = mark_exam(jpeg_file_name_path, len(multiple_choice_questions), answer_key)
+                score = mark_exam(jpeg_file_name_path, number_of_questions, answer_key)
                 scores.append(score)
                 marked_student_assessment = exam.MarkedStudentAssessment(examiner_id=request.user.id,
                                                                          exam_id=exam_pk,
@@ -292,6 +303,31 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
         print("answer key: " + str(answer_key))
         print(len(multiple_choice_questions))
         print(multiple_choice_answers)
+
+
+def get_questions_per_box(number_of_questions):
+
+    number_of_questions_per_box = defaultdict(int)
+    number_of_sections = 0
+
+    if number_of_questions > 20:
+        for i in range(number_of_questions):
+            number_of_sections = math.floor(number_of_questions / 20)
+
+        for i in range(number_of_sections):
+            number_of_questions_per_box[i] = 20
+
+        questions = number_of_questions % 20
+        if questions != 0:
+            number_of_questions_per_box[len(number_of_questions_per_box)] = questions
+    else:
+        number_of_questions_per_box = {0 : number_of_questions}
+
+
+        # if number_of_questions - i < 20:
+        #     dict[z] = number_of_questions - i
+        #     break
+    return number_of_questions_per_box
 
 
 def generate_exam_pdf(c, saved_mark_sheet_form, student, classroom):
@@ -377,6 +413,7 @@ def generate_exam_pdf(c, saved_mark_sheet_form, student, classroom):
 
 class CreateMarkSheetView(LoginRequiredMixin, CreateView):
     context = {}
+
     def get(self, request):
         form = MarkSheetForm()
         form.get_teacher_class(request.user)
@@ -398,13 +435,11 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 
         students = Student.objects.filter(id__in=student_ids)
 
-
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
         c = canvas.Canvas(response)
 
         for student in students:
-
             generate_exam_pdf(c, saved_mark_sheet_form, student, classroom.name)
 
         final_pdf = c.save()
@@ -420,6 +455,7 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
 class CreateExamView(LoginRequiredMixin, CreateView):
     # model = Question
     context = {}
+
     def get(self, request):
         self.context['form'] = QuestionForm()
         self.context['form'] = QuestionForm()
@@ -463,6 +499,7 @@ class CreateExamView(LoginRequiredMixin, CreateView):
 
 class EditClassView(LoginRequiredMixin, ListView):
     context = {}
+
     def get(self, request, **kwargs):
         self.context['form'] = StudentEditForm()
         class_list = Classroom.objects.all().filter(user=request.user)
@@ -472,20 +509,19 @@ class EditClassView(LoginRequiredMixin, ListView):
 
         self.context['students'] = student_class_list.values('student')
 
-
         print(class_list)
         print(student_class_list)
         return render(request, 'view_class.html', self.context)
+
+
 def selectClass(request, pk):
     print("test")
     return render(request, 'view_class.html')
 
 
-
-
 class CreateClassView(LoginRequiredMixin, CreateView):
-
     print("test")
+
     def get(self, request):
         form = CsvModelForm(request.POST, request.FILES)
         return render(request, 'create_class.html', {'form': form})
@@ -532,6 +568,8 @@ class CreateClassView(LoginRequiredMixin, CreateView):
                         )
 
         return render(request, 'create_class.html', {'form': form})
+
+
 def signup(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -580,23 +618,24 @@ def edit_student(request, pk, name):
     if len(student.first_name) != 0:
         old_first_name = old_student.values("first_name").first().get('first_name')
         student_to_update.update(first_name=student.first_name)
-        messages.success(request, "Successfully changed the first name " + old_first_name + " to " + student.first_name + " for the class " + name + ".")
+        messages.success(request,
+                         "Successfully changed the first name " + old_first_name + " to " + student.first_name + " for the class " + name + ".")
     if len(student.last_name) != 0:
         old_last_name = old_student.values("last_name").first().get('last_name')
         student_to_update.update(last_name=student.last_name)
-        messages.success(request, "Successfully changed the last name " + old_last_name + " to " + student.last_name + " for the class " + name + ".")
+        messages.success(request,
+                         "Successfully changed the last name " + old_last_name + " to " + student.last_name + " for the class " + name + ".")
     if len(student.student_number) != 0:
         old_student_number = old_student.values("student_number").first().get('student_number')
         student_to_update.update(student_number=student.student_number)
-        messages.success(request, "Successfully changed the student number " + old_student_number + " to " + student.student_number + " for the class " + name + ".")
-
-
+        messages.success(request,
+                         "Successfully changed the student number " + old_student_number + " to " + student.student_number + " for the class " + name + ".")
 
     return redirect('view_class')
 
 
 def delete_class(request, pk, classname):
-    if request.method=='POST':
+    if request.method == 'POST':
         classroom = Classroom.objects.get(pk=pk)
         classroom.delete()
 

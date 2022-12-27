@@ -3,6 +3,8 @@
 import os
 import sys
 
+from djangoProject import settings
+
 
 def main():
     """Run administrative tasks."""
