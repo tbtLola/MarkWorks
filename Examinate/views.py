@@ -266,10 +266,9 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             scores = []
 
             number_of_questions = len(multiple_choice_questions)
+            box_questions = get_questions_per_box(number_of_questions)
 
-            get_questions_per_box(number_of_questions)
 
-            print(number_of_questions)
 
             for page in pages:
                 image_file_name = 'out' + str(i) + '.jpg'

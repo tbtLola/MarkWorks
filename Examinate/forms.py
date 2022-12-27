@@ -57,6 +57,7 @@ class QuestionForm(forms.ModelForm):
 class MarkSheetForm(forms.ModelForm):
     number_of_questions = forms.IntegerField()
     number_of_choices = forms.IntegerField() #TODO put a cap of 7 on this
+    exam_title = forms.CharField()
     classroom = forms.ModelChoiceField(label="Select a class", queryset=Classroom.objects.all(), required=True)
 
     def get_teacher_class(self, user):
@@ -65,7 +66,7 @@ class MarkSheetForm(forms.ModelForm):
 
     class Meta:
         model = MarkSheet
-        fields = ('number_of_questions', 'number_of_choices', 'classroom',)
+        fields = ('number_of_questions', 'number_of_choices', 'classroom', 'exam_title',)
 
 
 class CsvModelForm(forms.ModelForm):
