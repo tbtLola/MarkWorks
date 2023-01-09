@@ -58,16 +58,19 @@ class MarkedStudentAssessment(models.Model):
     upload_date = models.DateTimeField(null=True)
     upload_instant = models.DateTimeField(auto_now_add=True)
 
+
 class MarkSheet(models.Model):
     exam_title = models.CharField(max_length=100)
     number_of_questions = models.IntegerField()
     number_of_choices = models.IntegerField()
+    user = models.ForeignKey("UserProfile", on_delete=models.CASCADE, null=True)
     classroom = models.ForeignKey("Classroom", on_delete=models.CASCADE, null=True)
     mark_sheet_pdf = models.FileField(upload_to='exams/pdf/', null=True)
 
     def __str__(self):
         return self.exam_title
-    #StudentQR
-    #StudentName
-    #Class
-    #TestName
+
+
+class MarkSheetQuestion(models.Model):
+    mark_sheet = models.ForeignKey("MarkSheet", on_delete=models.CASCADE, default=1)
+    answer = models.CharField(max_length=2)

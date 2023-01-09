@@ -423,7 +423,11 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         # TODO check if form is valids
 
         mark_sheet_form = MarkSheetForm(request.POST)
+        mark_sheet_form.instance.user = request.user
         saved_mark_sheet_form = mark_sheet_form.save(commit=False)
+
+        answer_key = mark_sheet_form.cleaned_data['answer_key']
+        answer_key_list = answer_key.split(",")
 
         classroom = saved_mark_sheet_form.classroom
         students = StudentClass.objects.filter(classroom=classroom).values('student')
@@ -444,6 +448,13 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         final_pdf = c.save()
         saved_mark_sheet_form.mark_sheet_pdf = final_pdf
         os.startfile("hello.pdf")
+        mark_sheet_form.save()
+
+        for ans in answer_key_list: #TODO add validation - if the num of question in list is less than num of questions entered then add a warning.
+            exam.MarkSheetQuestion.objects.create(
+                mark_sheet=saved_mark_sheet_form,
+                answer=ans
+            )
 
         form = MarkSheetForm()
         self.context['form'] = form

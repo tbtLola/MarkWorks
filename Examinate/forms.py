@@ -28,7 +28,7 @@ class ExamForm(forms.ModelForm):
 
 
 class StudentAssessmentMarkingForm(forms.ModelForm):
-    exam_assessment = forms.ModelChoiceField(label="Item Choices", queryset=Exam.objects.all(), required=True)
+    exam_assessment = forms.ModelChoiceField(label="Item Choices", queryset=MarkSheet.objects.all(), required=True)
     image = forms.FileField()
 
     class Meta:
@@ -36,7 +36,7 @@ class StudentAssessmentMarkingForm(forms.ModelForm):
         fields = ('image', 'exam_assessment')
 
     def getThing(self, user):
-        all__filter = Exam.objects.all().filter(user=user)
+        all__filter = MarkSheet.objects.all().filter(user=user)
         self.fields['exam_assessment'] = forms.ModelChoiceField(label="Item Choices", queryset=all__filter,
                                                                 required=True)
 
@@ -59,6 +59,7 @@ class MarkSheetForm(forms.ModelForm):
     number_of_choices = forms.IntegerField() #TODO put a cap of 7 on this
     exam_title = forms.CharField()
     classroom = forms.ModelChoiceField(label="Select a class", queryset=Classroom.objects.all(), required=True)
+    answer_key = forms.CharField()
 
     def get_teacher_class(self, user):
         class_filtered_by_teacher = Classroom.objects.all().filter(user=user)
