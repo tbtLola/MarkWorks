@@ -42,7 +42,6 @@ def recContour(contours):
 
     for i in contours:
         area = cv2.contourArea(i)
-        #print("Area: ", area)
         if area > 50:
             perimeter = cv2.arcLength(i, True)
             approximation = cv2.approxPolyDP(i, 0.02 * perimeter, True)
@@ -73,17 +72,35 @@ def reorder(myPoints):
 
     return myPointsNew
 
-def splitBoxes(img):
-    rows = np.vsplit(img, 10)
+# def splitBoxes(img, questions, choices):
+#     i = 0
+#     rows = np.vsplit(img, questions) #this depends on imaage size and num of q/cols
+#     cv2.imshow("row", rows[0])
+#     boxes = []
+#     # for r in rows:
+#     #     cols = np.hsplit(r, choices)
+#     #     for box in cols:
+#     #         cv2.imshow('tester' + str(i), box )
+#     #         boxes.append(box)
+#     #         i = i +1
+#     # print(len(boxes))
+#     return boxes
+
+def splitBoxes(img, questions, choices):
+    print(questions)
+    i = 0
+    rows = np.vsplit(img, questions) #TODO 20 per box but we have 60 qs in total not as simple as passing in num off questions
     boxes = []
     for r in rows:
-        cols = np.hsplit(r, 5)
+        cols = np.hsplit(r, choices)
         for box in cols:
             boxes.append(box)
+            cv2.imshow("split" + str(i) , box)
+            i = i + 1
     return boxes
 
 def sort_contours(cnts, method="left-to-right"):
-    # initialize the reverse flag and sort index
+    # initialize the reverse flag and sort index1
     reverse = False
     i = 0
 

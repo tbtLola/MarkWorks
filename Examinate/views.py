@@ -21,7 +21,7 @@ from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkShe
 from .models import Exam, Question, Csv, Student, Classroom, TeacherClass
 from .models import exam
 from .registration_form import RegistrationForm
-from .utils import recContour, getCornerPoints, reorder, splitBoxes
+from .utils import stackImages, recContour, getCornerPoints, reorder, splitBoxes, sort_contours
 from collections import defaultdict
 from math import floor
 from django.http import HttpResponse
@@ -34,8 +34,8 @@ from reportlab.pdfgen import canvas
 User = get_user_model()
 
 ##############
-IMAGE_WIDTH = 1200
-IMAGE_HEIGHT = 1000
+IMAGE_WIDTH = 500
+IMAGE_HEIGHT = 1200
 NUMBER_OF_CHOICES = 5
 
 # TODO move this into the model
@@ -62,89 +62,108 @@ class Home(TemplateView):
     template_name = 'home.html'
 
 
-def mark_exam(image, number_of_questions, answer_key):  # TODO handle GET requests
+def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO handle GET requests
 
-    image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
-    image = cv2.imread(image_file_path)
-    resized_image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
+    print("MARKING")
+    path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
+    img = cv2.imread(path)
 
-    # # Pre-procesing
-    image_contours = resized_image.copy()
-    image_max_contours = resized_image.copy()
-    image_gray = cv2.cvtColor(resized_image, cv2.COLOR_BGR2GRAY)
-    image_blur = cv2.GaussianBlur(image_gray, (5, 5), 1)
-    image_canny = cv2.Canny(image_blur, 10, 50)
+    # decode to read qr
+    # code = decode(img)
+    # print(code)
+    #
 
+    # Pre-processing
+    img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT))
+    cv2.imshow("re-sized_image", img)
+    imgContours = img.copy()
+    imgMaxContours = img.copy()
+    warped_image = img.copy()
+    warped_image_threshold = img.copy()
+    imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    imgBlur = cv2.GaussianBlur(imgGray, (5, 5), 1)
+    imgCanny = cv2.Canny(imgBlur, 10, 50)  # detects edges
     # Finding all contours
-    contours, hierarchy = cv2.findContours(image_canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(imgCanny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours = sort_contours(contours)
-    cv2.drawContours(image_contours, contours, -1, (0, 255, 0), 10)
+    draw_contours = cv2.drawContours(imgContours, contours, -1, (0, 255, 0), 10)
+    # Find rectangles
+    recContours = recContour(contours)
+    # print(getCornerPoints(maxContour))
+    print("test" + str(len(recContours)))
+    if len(recContours) != 0:
+        # new
+        #
+        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[0]), -1, (348, 0, 100), 20)
+        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[1]), -1, (200, 200, 0), 20)
+        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[2]), -1, (0, 102, 200), 20)
 
-    rec_contours = recContour(contours)
-
-    if len(rec_contours) != 0:
         total_boxes = []
-        for i in range(len(rec_contours)):
-            contour_corner_points = getCornerPoints(rec_contours[i])
+        for i in range(len(recContours)):
+            contour_corner_points = getCornerPoints(recContours[i])
             reordered_contour = reorder(contour_corner_points)
-            rec_contours[i] = reordered_contour
+            recContours[i] = reordered_contour
 
-            first_point = np.float32(rec_contours[i])
+            biggest_contour = getCornerPoints(recContours[i])
+            first_point = np.float32(biggest_contour)
             second_point = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
 
             matrix = cv2.getPerspectiveTransform(first_point, second_point)
-            warped_image = cv2.warpPerspective(resized_image, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
+            warped_image = cv2.warpPerspective(img, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
             warped_gray_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
             warped_image_threshold = cv2.threshold(warped_gray_image, 170, 255, cv2.THRESH_BINARY_INV)[1]
 
-            split_boxes = splitBoxes(warped_image_threshold)
+            split_boxes = splitBoxes(warped_image_threshold, box_questions.get(i), choices)
             total_boxes = total_boxes + split_boxes
-            # cv2.imshow("warpy" + str(i), warped_image)
-            # cv2.imshow("gray_warpy" + str(i), warped_image)
-            cv2.imshow("thres_warpy" + str(i), warped_image_threshold)
-
-        pixelVal = np.zeros((number_of_questions, NUMBER_OF_CHOICES))  # 5x5 b/c 5 questions and 5 answers
+        #
+        pixelVal = np.zeros((questions, choices))  # 5x5 b/c 5 questions and 5 answers
         cols = 0
         rows = 0
-
         total_number_of_boxes = len(total_boxes)
-        number_of_choices = number_of_questions * NUMBER_OF_CHOICES
-        number_of_unused_boxes = total_number_of_boxes - number_of_choices
-        total_boxes = total_boxes[:-number_of_unused_boxes]  # removes unused rows in each box
 
+        number_of_choices = questions * choices
+        # number_of_unused_boxes = total_number_of_boxes - number_of_choices
+        # print(number_of_unused_boxes)
+        # total_boxes = total_boxes[:-number_of_unused_boxes]  # removes unused rows in each box
+
+        # getting non-zero pixel values of each box
         for image in total_boxes:
             totalPixels = cv2.countNonZero(image)
             pixelVal[rows][cols] = totalPixels
             cols += 1
-
-            if cols == NUMBER_OF_CHOICES:
+            if cols == choices:
                 rows += 1
                 cols = 0
         print(pixelVal)
-
-        # Finding index val of the markings
+        # #     # Finding index val of the markings
         index = []
-        for x in range(0, number_of_questions):
+        for x in range(0, questions):
             questionRow = pixelVal[x]
             indexVal = np.where(questionRow == np.amax(questionRow))
             index.append(indexVal[0][0])
-        # print(index)
+        print(index)
 
-        # Grading
         grading = []
-        for x in range(0, number_of_questions):
+        for x in range(0, questions):
             if answer_key[x] == index[x]:
                 grading.append(1)
             else:
                 grading.append(0)
         # print(grading)
-        score = (sum(grading) / number_of_questions) * 100
+        score = (sum(grading) / questions) * 100
+        print(score)
 
-        return score
+    imgBlank = np.zeros_like(img)
+    imageArray = ([img, imgGray, imgBlur, imgCanny, imgBlank],
+                  [imgContours, imgMaxContours, warped_image, warped_image_threshold, imgBlank])
+    imgStacked = stackImages(imageArray, 0.5)
+    cv2.imshow("Stacked Image ", imgStacked)
+    cv2.waitKey(0)
+    return score
 
 
 def sort_contours(cnts, method="left-to-right"):
-    # initialize the reverse flag and sort index
+    # initialize the reverse flag and sort index1
     reverse = False
     i = 0
 
@@ -165,7 +184,6 @@ def sort_contours(cnts, method="left-to-right"):
 
     # return the list of sorted contours and bounding boxes
     return (cnts)
-
 
 class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
@@ -246,43 +264,46 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
         if mark_form.is_valid():
             mark_form.instance.user = request.user
 
-            exam_pk = mark_form.data["exam_assessment"]
+            mark_sheet_pk = mark_form.data["exam_assessment"]
 
-            multiple_choice_questions = Question.objects.filter(exam_id=exam_pk).filter(question_type='MC')
-            multiple_choice_answers = multiple_choice_questions.values_list('answer', flat=True)
+            print("MARK SHETEt")
+            print(mark_sheet_pk)
+
+            questions = exam.MarkSheetQuestion.objects.filter(mark_sheet=mark_sheet_pk)
+            mark_sheet = exam.MarkSheet.objects.filter(pk=mark_sheet_pk)
+
+            number_of_choices = mark_sheet.values("number_of_choices").first()['number_of_choices']
+
+            answers = questions.values_list('answer', flat=True)
 
             answer_key = []
-            for mc in multiple_choice_answers:
+            for mc in answers:
                 answer_key.append(MC_DiCTIONARY.get(mc))
-
-            self.logTestInfo(answer_key, multiple_choice_answers, multiple_choice_questions)
 
             saved_form = mark_form.save()
 
             image_file_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, saved_form.image.name))
-            pages = convert_from_path(image_file_path, 500)
+            pages = convert_from_path(image_file_path)
 
             i = 0
             scores = []
 
-            number_of_questions = len(multiple_choice_questions)
+            number_of_questions = len(questions)
+
+
             box_questions = get_questions_per_box(number_of_questions)
-
-
+            print(answer_key)
+            print(number_of_questions)
+            print(box_questions)
+            print(number_of_choices)
 
             for page in pages:
                 image_file_name = 'out' + str(i) + '.jpg'
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
                 page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
-                score = mark_exam(jpeg_file_name_path, number_of_questions, answer_key)
+                score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key)
                 scores.append(score)
-                marked_student_assessment = exam.MarkedStudentAssessment(examiner_id=request.user.id,
-                                                                         exam_id=exam_pk,
-                                                                         grade=score,
-                                                                         name="test",  # TODO update the name
-                                                                         image=image_file_name)  # TODO instead of doing this maybe just use the form
-                marked_student_assessment.save()
 
             self.context['scores'] = scores
 
