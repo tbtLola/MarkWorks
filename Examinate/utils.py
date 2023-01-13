@@ -42,7 +42,8 @@ def recContour(contours):
 
     for i in contours:
         area = cv2.contourArea(i)
-        if area > 50:
+
+        if area > 60000:
             perimeter = cv2.arcLength(i, True)
             approximation = cv2.approxPolyDP(i, 0.02 * perimeter, True)
             #print("Corner Points", len(approximation)) #The ones with 4 are essentially a square or rectangle

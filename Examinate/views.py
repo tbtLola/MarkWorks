@@ -66,6 +66,7 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
 
     print("MARKING")
     path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
+    # print(path)
     img = cv2.imread(path)
 
     # decode to read qr
@@ -90,13 +91,12 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
     # Find rectangles
     recContours = recContour(contours)
     # print(getCornerPoints(maxContour))
-    print("test" + str(len(recContours)))
+    # print("test" + str(len(recContours)))
+
+    print("rec contours" + str(len(recContours)))
+
+
     if len(recContours) != 0:
-        # new
-        #
-        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[0]), -1, (348, 0, 100), 20)
-        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[1]), -1, (200, 200, 0), 20)
-        #     cv2.drawContours(imgMaxContours, getCornerPoints(recContours[2]), -1, (0, 102, 200), 20)
 
         total_boxes = []
         for i in range(len(recContours)):
@@ -108,10 +108,24 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
             first_point = np.float32(biggest_contour)
             second_point = np.float32([[0, 0], [IMAGE_WIDTH, 0], [0, IMAGE_HEIGHT], [IMAGE_WIDTH, IMAGE_HEIGHT]])
 
+            # print(first_point)
+            # print(second_point)
+            print("questions")
+            print(questions)
+
+
             matrix = cv2.getPerspectiveTransform(first_point, second_point)
             warped_image = cv2.warpPerspective(img, matrix, (IMAGE_WIDTH, IMAGE_HEIGHT))
             warped_gray_image = cv2.cvtColor(warped_image, cv2.COLOR_BGR2GRAY)
             warped_image_threshold = cv2.threshold(warped_gray_image, 170, 255, cv2.THRESH_BINARY_INV)[1]
+
+            # imgBlank = np.zeros_like(img)
+            # imageArray = ([img, imgGray, imgBlur, imgCanny, imgBlank],
+            #               [imgContours, imgMaxContours, warped_image, warped_image_threshold, imgBlank])
+            # imgStacked = stackImages(imageArray, 0.5)
+            # cv2.imshow("Stacked Image ", imgStacked)
+            # cv2.waitKey(0)
+
 
             split_boxes = splitBoxes(warped_image_threshold, box_questions.get(i), choices)
             total_boxes = total_boxes + split_boxes
@@ -153,12 +167,12 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
         score = (sum(grading) / questions) * 100
         print(score)
 
-    imgBlank = np.zeros_like(img)
-    imageArray = ([img, imgGray, imgBlur, imgCanny, imgBlank],
-                  [imgContours, imgMaxContours, warped_image, warped_image_threshold, imgBlank])
-    imgStacked = stackImages(imageArray, 0.5)
-    cv2.imshow("Stacked Image ", imgStacked)
-    cv2.waitKey(0)
+    # imgBlank = np.zeros_like(img)
+    # imageArray = ([img, imgGray, imgBlur, imgCanny, imgBlank],
+    #               [imgContours, imgMaxContours, warped_image, warped_image_threshold, imgBlank])
+    # imgStacked = stackImages(imageArray, 0.5)
+    # cv2.imshow("Stacked Image ", imgStacked)
+    # cv2.waitKey(0)
     return score
 
 
@@ -183,7 +197,7 @@ def sort_contours(cnts, method="left-to-right"):
                                         key=lambda b: b[1][i], reverse=reverse))
 
     # return the list of sorted contours and bounding boxes
-    return (cnts)
+    return cnts
 
 class ExamListView(LoginRequiredMixin, ListView):
     model = Exam
@@ -290,15 +304,16 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
 
             number_of_questions = len(questions)
 
-
             box_questions = get_questions_per_box(number_of_questions)
-            print(answer_key)
-            print(number_of_questions)
-            print(box_questions)
-            print(number_of_choices)
 
             for page in pages:
+                print("anskey" + str(answer_key))
+                print("number_of_questions" + str(number_of_questions))
+                print("box_questions" + str(box_questions))
+                print("number_of_choices" + str(number_of_choices))
+
                 image_file_name = 'out' + str(i) + '.jpg'
+                print(image_file_name)
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
                 page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
