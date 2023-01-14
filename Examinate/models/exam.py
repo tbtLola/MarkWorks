@@ -74,3 +74,9 @@ class MarkSheet(models.Model):
 class MarkSheetQuestion(models.Model):
     mark_sheet = models.ForeignKey("MarkSheet", on_delete=models.CASCADE, default=1)
     answer = models.CharField(max_length=2)
+
+
+class MarkedStudentExam(models.Model):
+    student = models.ForeignKey("Student", on_delete=models.CASCADE)
+    score = models.IntegerField()
+    user = models.ForeignKey("UserProfile", on_delete=models.CASCADE, null=True)

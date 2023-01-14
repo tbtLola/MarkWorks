@@ -96,7 +96,7 @@ def splitBoxes(img, questions, choices):
         cols = np.hsplit(r, choices)
         for box in cols:
             boxes.append(box)
-            cv2.imshow("split" + str(i) , box)
+            # cv2.imshow("split" + str(i) , box)
             i = i + 1
     return boxes
 

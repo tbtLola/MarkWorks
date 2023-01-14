@@ -62,12 +62,19 @@ class Home(TemplateView):
     template_name = 'home.html'
 
 
-def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO handle GET requests
+def mark_exam(image, box_questions, questions, choices, answer_key, user):  # TODO handle GET requests
 
+    score = 0
     print("MARKING")
     path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image))
     # print(path)
     img = cv2.imread(path)
+
+    code = decode(img)
+    data_bytes = code[0].data
+    student_id = data_bytes.decode('utf-8')
+    student = Student.objects.get(pk=student_id)
+    print(student)
 
     # decode to read qr
     # code = decode(img)
@@ -76,7 +83,7 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
 
     # Pre-processing
     img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT))
-    cv2.imshow("re-sized_image", img)
+    # cv2.imshow("re-sized_image", img)
     imgContours = img.copy()
     imgMaxContours = img.copy()
     warped_image = img.copy()
@@ -110,8 +117,8 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
 
             # print(first_point)
             # print(second_point)
-            print("questions")
-            print(questions)
+            # print("questions")
+            # print(questions)
 
 
             matrix = cv2.getPerspectiveTransform(first_point, second_point)
@@ -148,14 +155,14 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
             if cols == choices:
                 rows += 1
                 cols = 0
-        print(pixelVal)
+        # print(pixelVal)
         # #     # Finding index val of the markings
         index = []
         for x in range(0, questions):
             questionRow = pixelVal[x]
             indexVal = np.where(questionRow == np.amax(questionRow))
             index.append(indexVal[0][0])
-        print(index)
+        # print(index)
 
         grading = []
         for x in range(0, questions):
@@ -165,7 +172,11 @@ def mark_exam(image, box_questions, questions, choices, answer_key):  # TODO han
                 grading.append(0)
         # print(grading)
         score = (sum(grading) / questions) * 100
-        print(score)
+
+        marked_exam = exam.MarkedStudentExam.objects.create(student=student, score=score, user=user)
+        marked_exam.save()
+        # print(score)
+
 
     # imgBlank = np.zeros_like(img)
     # imageArray = ([img, imgGray, imgBlur, imgCanny, imgBlank],
@@ -317,7 +328,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
                 page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
-                score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key)
+                score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key, request.user)
                 scores.append(score)
 
             self.context['scores'] = scores
