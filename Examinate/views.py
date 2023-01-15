@@ -175,6 +175,7 @@ def mark_exam(image, box_questions, questions, choices, answer_key, user):  # TO
 
         marked_exam = exam.MarkedStudentExam.objects.create(student=student, score=score, user=user)
         marked_exam.save()
+        return marked_exam
         # print(score)
 
 
@@ -184,7 +185,7 @@ def mark_exam(image, box_questions, questions, choices, answer_key, user):  # TO
     # imgStacked = stackImages(imageArray, 0.5)
     # cv2.imshow("Stacked Image ", imgStacked)
     # cv2.waitKey(0)
-    return score
+    return []
 
 
 def sort_contours(cnts, method="left-to-right"):
@@ -311,7 +312,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
             pages = convert_from_path(image_file_path)
 
             i = 0
-            scores = []
+            marked_exams = []
 
             number_of_questions = len(questions)
 
@@ -329,9 +330,9 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
                 page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
                 score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key, request.user)
-                scores.append(score)
+                marked_exams.append(score)
 
-            self.context['scores'] = scores
+            self.context['marked_exams'] = marked_exams
 
             form = StudentAssessmentMarkingForm()
             form.getThing(request.user)  # TODO move this to an init method in the forms class

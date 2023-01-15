@@ -4,7 +4,7 @@
 
 {% block content %}
  <h2>Mark Assessment</h2>
-    {% if scores %}
+    {% if marked_exams %}
         <table class="table mb-0">
             <thead>
             <tr>
@@ -16,16 +16,17 @@
             </tr>
             </thead>
             <tbody>
-                {% for score in scores %}
+                {% for marked_exam in marked_exams %}
                     <tr>
                         <td>
                             exam
                         </td>
                         <td>
-                            name
+                            {{ marked_exam.student.first_name }}
+                            {{ marked_exam.student.last_name }}
                         </td>
                         <td>
-                            {{ score|floatformat:2 }}
+                            {{ marked_exam.score|floatformat:2 }}
                         </td>
                         <td>
                             download
