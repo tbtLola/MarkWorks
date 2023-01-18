@@ -80,3 +80,4 @@ class MarkedStudentExam(models.Model):
     student = models.ForeignKey("Student", on_delete=models.CASCADE)
     score = models.IntegerField()
     user = models.ForeignKey("UserProfile", on_delete=models.CASCADE, null=True)
+    marksheet = models.ForeignKey("MarkSheet", on_delete=models.CASCADE, null=True)

@@ -62,7 +62,7 @@ class Home(TemplateView):
     template_name = 'home.html'
 
 
-def mark_exam(image, box_questions, questions, choices, answer_key, user):  # TODO handle GET requests
+def mark_exam(image, box_questions, questions, choices, answer_key, user, pk):  # TODO handle GET requests
 
     score = 0
     print("MARKING")
@@ -173,7 +173,10 @@ def mark_exam(image, box_questions, questions, choices, answer_key, user):  # TO
         # print(grading)
         score = (sum(grading) / questions) * 100
 
-        marked_exam = exam.MarkedStudentExam.objects.create(student=student, score=score, user=user)
+        marked_exam = exam.MarkedStudentExam.objects.create(student=student,
+                                                            score=score,
+                                                            user=user,
+                                                            marksheet=pk)
         marked_exam.save()
         return marked_exam
         # print(score)
@@ -329,7 +332,7 @@ class AssessStudentExamView(LoginRequiredMixin, CreateView):
                 jpeg_file_name_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, image_file_name))
                 page.save(jpeg_file_name_path, 'JPEG')
                 i = i + 1
-                score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key, request.user)
+                score = mark_exam(jpeg_file_name_path, box_questions, number_of_questions, number_of_choices, answer_key, request.user,  exam.MarkSheet.objects.get(pk=mark_sheet_pk))
                 marked_exams.append(score)
 
             self.context['marked_exams'] = marked_exams
@@ -508,6 +511,11 @@ class CreateMarkSheetView(LoginRequiredMixin, CreateView):
         self.context['form'] = form
         # return render(request, 'create_marksheet.html', self.context)
         return response
+
+class ViewMarkedAssessment(LoginRequiredMixin, ListView):
+    def get(self, request):
+        return render(request, 'view_marks.html')
+
 
 
 class CreateExamView(LoginRequiredMixin, CreateView):
