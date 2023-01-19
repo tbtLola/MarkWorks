@@ -38,6 +38,7 @@ urlpatterns = [
     path('class/delete/<int:pk>/<str:classname>', views.delete_class, name='delete_class'),
     path('student/delete/<uuid:pk>/<str:classname>', views.delete_student, name='delete_student'),
     path('student/edit/<uuid:pk>/<str:name>', views.edit_student, name='edit_student'),
+    path('exams/mark_sheet/numerical', views.my_view, name='add_numerical_form'),
     path('selectClass/<int:pk>', views.selectClass, name="selectClass"),
     # path('exams/<int:pk>/mark', views.mark_exam, name='mark_exam'),
     path('accounts/', include('django.contrib.auth.urls')),

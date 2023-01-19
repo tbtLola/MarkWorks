@@ -3,6 +3,7 @@ from crispy_forms_gds.helper import FormHelper
 from django import forms
 
 from .models import *
+from .models.exam import MarkSheetNumericalResponseSection
 
 
 class UploadForms(forms.Form):
@@ -94,3 +95,12 @@ class StudentEditForm(forms.ModelForm):
     class Meta:
         model = Student
         exclude = ('id', 'qr_code',)
+
+class MarkSheetNumericalResponseSectionForm(forms.ModelForm):
+    number_of_questions = forms.IntegerField(required=True)
+    number_of_columns = forms.IntegerField(required=True, max_value=10)
+    number_of_digits = forms.IntegerField(required=True, max_value=10)
+
+    class Meta:
+        model = MarkSheetNumericalResponseSection
+        fields = ('number_of_questions', 'number_of_columns', 'number_of_digits',)

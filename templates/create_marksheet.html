@@ -4,13 +4,49 @@
 
 {% block content %}
     <div>
-     <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.media  }}
-        {{ form|crispy }}
-         <button type="submit" class="btn btn-primary">
-             Create and Download PDF!
-         </button>
-     </form>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.media }}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary">
+                Create and Download PDF!
+            </button>
+
+            <div class="sub_button">
+                <button type="button" value="Add Numerical Response" id="add-new-form-button">
+                    Add Numerical Response
+                </button>
+            </div>
+        </form>
+
+        <div id="new-form-container">
+
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+        <script>
+            jQuery(document).ready(function ($) {
+                $("#add-new-form-button").click(function (event) {
+                    event.preventDefault();
+                    let addedBtn = $(this)
+                    $.ajax({
+                        url: "{% url 'add_numerical_form' %}",
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                $("#new-form-container").append(response.form);
+                                addedBtn.parent('.sub_button').hide();
+                            } else {
+                                alert("Error: " + response.form);
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
     </div>
 {% endblock %}

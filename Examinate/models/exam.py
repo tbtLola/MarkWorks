@@ -71,6 +71,19 @@ class MarkSheet(models.Model):
         return self.exam_title
 
 
+class MarkSheetNumericalResponseSection(models.Model):
+    mark_sheet = models.ForeignKey("MarkSheet", on_delete=models.CASCADE, default=1)
+    number_of_questions = models.PositiveIntegerField()
+    number_of_columns = models.PositiveIntegerField()
+    number_of_digits = models.PositiveIntegerField()
+
+
+class MarkSheetNumericalResponseAnswers(models.Model):
+    mark_sheet_numerical_response_section = models.ForeignKey("MarkSheetNumericalResponseSection",
+                                                              on_delete=models.CASCADE)
+    answer = models.CharField(max_length=10)
+
+
 class MarkSheetQuestion(models.Model):
     mark_sheet = models.ForeignKey("MarkSheet", on_delete=models.CASCADE, default=1)
     answer = models.CharField(max_length=2)

@@ -9,14 +9,15 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, redirect
+from django.template.context_processors import csrf
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 from django.views.generic import TemplateView
 from pdf2image import convert_from_path
 from pyzbar.pyzbar import decode
-
+from crispy_forms.utils import render_crispy_form
 from .forms import ExamForm, QuestionForm, StudentAssessmentMarkingForm, MarkSheetForm, CsvModelForm, StudentClass, \
-    StudentEditForm
+    StudentEditForm, MarkSheetNumericalResponseSectionForm
 
 from .models import Exam, Question, Csv, Student, Classroom, TeacherClass
 from .models import exam
@@ -24,7 +25,7 @@ from .registration_form import RegistrationForm
 from .utils import stackImages, recContour, getCornerPoints, reorder, splitBoxes, sort_contours
 from collections import defaultdict
 from math import floor
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import csv
 
 import io
@@ -698,7 +699,8 @@ def edit_student(request, pk, name):
                          "Successfully changed the student number " + old_student_number + " to " + student.student_number + " for the class " + name + ".")
 
     return redirect('view_class')
-
+def add_numerical_form(request):
+    return redirect()
 
 def delete_class(request, pk, classname):
     if request.method == 'POST':
@@ -707,3 +709,25 @@ def delete_class(request, pk, classname):
 
         messages.success(request, "Successfully deleted the class " + classname)
     return redirect('view_class')
+
+
+def my_view(request):
+
+    ctx = {}
+    ctx.update(csrf(request))
+
+    if request.method == 'GET':
+        form = MarkSheetNumericalResponseSectionForm()
+        form = render_crispy_form(form, context=ctx)
+        return render(request, 'create_marksheet.html', {'form': form})
+    elif request.method == 'POST' and request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        form = MarkSheetNumericalResponseSectionForm(request.POST)
+        if form.is_valid():
+            # Do something with the form data
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            # Return the form with errors
+            form = render_crispy_form(form, context=ctx)
+
+            return JsonResponse({'success': True, 'form': form})
